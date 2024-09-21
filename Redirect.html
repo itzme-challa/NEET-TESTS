@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Redirect Page</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+        .message {
+            text-align: center;
+            font-size: 18px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="message" id="message">
+        Redirecting...
+    </div>
+    <script>
+        (function() {
+            const visitKey = 'lastVisit';
+            const visitURL = 'https://neet-tests.pages.dev/tests';
+            const currentTime = new Date().getTime();
+            const fiveHoursInMillis = 5 * 60 * 60 * 1000;
+
+            const lastVisit = localStorage.getItem(visitKey);
+
+            if (lastVisit && (currentTime - lastVisit < fiveHoursInMillis)) {
+                // User has visited within the last 5 hours
+                window.location.href = visitURL;
+            } else {
+                // User has not visited or it's been more than 5 hours
+                localStorage.setItem(visitKey, currentTime);
+
+                // Get current month and year for alias
+                const currentDate = new Date();
+                const month = currentDate.toLocaleString('default', { month: 'long' });
+                const year = currentDate.getFullYear();
+                const alias = `${month}${year}`;
+                const fallbackURL = `https://adrinolinks.in/api?api=5a2539904639474b5f3da41f528199204eb76f65&url=${encodeURIComponent(visitURL)}&alias=${alias}`;
+
+                // Fetch the shortened URL
+                fetch(fallbackURL)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === "success") {
+                            window.location.href = data.shortenedUrl;
+                        } else {
+                            document.getElementById('message').textContent = 'Error occurred. Please try again later.';
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error fetching the URL:', error);
+                        document.getElementById('message').textContent = 'Error occurred. Please check your connection.';
+                    });
+            }
+        })();
+    </script>
+</body>
+</html>
