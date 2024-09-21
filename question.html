@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Quiz App</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff;
+            color: #333;
+        }
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 20px;
+            background: linear-gradient(145deg, #ffffff, #e6e6e6);
+            border-radius: 15px;
+            box-shadow: 7px 7px 15px #d1d1d1, -7px -7px 15px #ffffff;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+        button {
+            display: block;
+            margin: 15px auto;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+            width: 100%;
+            max-width: 200px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .question {
+            margin: 15px 0;
+            padding: 15px;
+            background-color: #f8f9fa;
+            font-weight: bold;
+            font-size: 18px;
+            line-height: 1.5;
+            border-radius: 8px;
+        }
+        .option {
+            padding: 10px;
+            margin: 5px 0;
+            background-color: #ffffff;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+            font-size: 16px;
+            border-radius: 8px;
+        }
+        .option:hover {
+            background-color: #e0e0e0;
+            transform: scale(1.02);
+        }
+        .selected {
+            background-color: #007bff;
+            color: white;
+            transform: scale(1.02);
+        }
+        .correct {
+            background-color: green;
+            color: white;
+        }
+        .incorrect {
+            background-color: red;
+            color: white;
+        }
+        .missed {
+            background-color: brown;
+            color: white;
+        }
+        #timer {
+            font-weight: bold;
+            text-align: center;
+            margin: 10px 0;
+        }
+        #resultSummary {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+        }
+        .result-item {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Quiz Topics</h1>
+    <div id="topicList"></div>
+    <div id="quizContainer" style="display: none;">
+        <h2 id="quizTopic"></h2>
+        <div id="timer"></div>
+        <div id="questionContainer"></div>
+        <button id="nextButton" style="display: none;">Next</button>
+    </div>
+    <div id="resultSummary" style="display: none;"></div>
+    <button id="restartButton" style="display: none;">Restart Quiz</button>
+</div>
+
+<!-- Firebase JS SDK -->
+<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-database.js"></script>
+<script>
+    // Your Firebase configuration
+    const firebaseConfig = {
+        apiKey: "AIzaSyAAYFrQ4la9wDoFYF6IAauti_DBouzWlGM",
+        authDomain: "friendship-checking.firebaseapp.com",
+        databaseURL: "https://friendship-checking-default-rtdb.asia-southeast1.firebasedatabase.app",
+        projectId: "friendship-checking",
+        storageBucket: "friendship-checking.appspot.com",
+        messagingSenderId: "118314602222",
+        appId: "1:118314602222:web:38a71de7c01442821aadff",
+        measurementId: "G-8Q6PZYQSBW"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const database = firebase.database();
+
+    let topics = [];
+    let currentQuiz = [];
+    let currentQuestionIndex = 0;
+    let userAnswers = [];
+    let timer;
+    let timeLeft = 30;
+
+    function loadTopics() {
+        database.ref('quizzes').once('value', snapshot => {
+            const data = snapshot.val();
+            const topicSet = new Set();
+
+            for (let id in data) {
+                const quiz = data[id];
+                if (quiz.topic) {
+                    topicSet.add(quiz.topic);
+                }
+            }
+
+            topics = Array.from(topicSet);
+            displayTopics();
+        });
+    }
+
+    function displayTopics() {
+        const topicList = document.getElementById('topicList');
+        topicList.innerHTML = '';
+        topics.forEach(topic => {
+            const button = document.createElement('button');
+            button.textContent = topic;
+            button.addEventListener('click', () => startQuiz(topic));
+            topicList.appendChild(button);
+        });
+    }
+
+    function startQuiz(topic) {
+        currentQuiz = [];
+        currentQuestionIndex = 0;
+        userAnswers = [];
+        timeLeft = 30;
+
+        database.ref('quizzes').orderByChild('topic').equalTo(topic).once('value', snapshot => {
+            snapshot.forEach(childSnapshot => {
+                currentQuiz.push(childSnapshot.val());
+            });
+            document.getElementById('quizTopic').textContent = topic;
+            document.getElementById('topicList').style.display = 'none';
+            document.getElementById('quizContainer').style.display = 'block';
+            displayQuestion();
+        });
+    }
+
+    function displayQuestion() {
+        const questionContainer = document.getElementById('questionContainer');
+        questionContainer.innerHTML = '';
+        const question = currentQuiz[currentQuestionIndex];
+
+        document.getElementById('timer').textContent = `Time Left: ${timeLeft}`;
+        const questionText = document.createElement('div');
+        questionText.className = 'question';
+        questionText.textContent = `${currentQuestionIndex + 1}. ${question.question}`;
+        questionContainer.appendChild(questionText);
+
+        question.options.forEach((option, index) => {
+            const optionDiv = document.createElement('div');
+            optionDiv.className = 'option';
+            optionDiv.textContent = option;
+            optionDiv.addEventListener('click', () => selectAnswer(index + 1));
+            questionContainer.appendChild(optionDiv);
+        });
+
+        startTimer();
+    }
+
+    function startTimer() {
+        clearInterval(timer);
+        timeLeft = 30;
+        document.getElementById('timer').textContent = `Time Left: ${timeLeft}`;
+        timer = setInterval(() => {
+            timeLeft--;
+            document.getElementById('timer').textContent = `Time Left: ${timeLeft}`;
+            if (timeLeft <= 0) {
+                clearInterval(timer);
+                selectAnswer(0); // 0 means missed
+            }
+        }, 1000);
+    }
+
+    function selectAnswer(selected) {
+        clearInterval(timer);
+        userAnswers.push(selected);
+
+        const question = currentQuiz[currentQuestionIndex];
+        const options = document.querySelectorAll('.option');
+        options.forEach((option, index) => {
+            if (index + 1 === selected) {
+                option.classList.add('selected');
+            }
+            if (index + 1 === question.correctOption) {
+                option.classList.add('correct');
+            } else if (selected === 0) {
+                option.classList.add('missed');
+            }
+        });
+
+        document.getElementById('nextButton').style.display = 'block';
+    }
+
+    document.getElementById('nextButton').addEventListener('click', () => {
+        if (currentQuestionIndex < currentQuiz.length - 1) {
+            currentQuestionIndex++;
+            displayQuestion();
+            document.getElementById('nextButton').style.display = 'none';
+        } else {
+            showResults();
+        }
+    });
+
+    function showResults() {
+        const resultSummary = document.getElementById('resultSummary');
+        resultSummary.innerHTML = '';
+        
+        let correctAnswers = 0;
+        let missedQuestions = 0;
+
+        currentQuiz.forEach((question, index) => {
+            const answer = userAnswers[index];
+            const questionResult = document.createElement('div');
+            questionResult.className = 'result-item';
+
+            if (answer === 0) {
+                missedQuestions++;
+                questionResult.className += ' missed';
+                questionResult.textContent = `Question: ${question.question} (Missed, Correct answer: ${question.options[question.correctOption - 1]})`;
+            } else if (answer == question.correctOption) {
+                correctAnswers++;
+                questionResult.className += ' correct';
+                questionResult.textContent = `Question: ${question.question} (Your answer: ${question.options[answer - 1]} - Correct)`;
+            } else {
+                questionResult.className += ' incorrect';
+                questionResult.textContent = `Question: ${question.question} (Your answer: ${question.options[answer - 1]} - Incorrect, Correct answer: ${question.options[question.correctOption - 1]})`;
+            }
+
+            resultSummary.appendChild(questionResult);
+        });
+
+        const totalQuestions = currentQuiz.length;
+        const percentage = (correctAnswers / totalQuestions) * 100;
+
+        resultSummary.innerHTML += `<h2>Results Summary</h2>`;
+        resultSummary.innerHTML += `<p>Correct Answers: ${correctAnswers}</p>`;
+        resultSummary.innerHTML += `<p>Incorrect Answers: ${totalQuestions - correctAnswers - missedQuestions}</p>`;
+        resultSummary.innerHTML += `<p>Missed Questions: ${missedQuestions}</p>`;
+        resultSummary.innerHTML += `<p>Score: ${percentage.toFixed(2)}%</p>`;
+        
+        resultSummary.style.display = 'block';
+        document.getElementById('quizContainer').style.display = 'none';
+        document.getElementById('restartButton').style.display = 'block';
+    }
+
+    document.getElementById('restartButton').addEventListener('click', () => {
+        document.getElementById('resultSummary').style.display = 'none';
+        document.getElementById('restartButton').style.display = 'none';
+        document.getElementById('topicList').style.display = 'block';
+    });
+
+    loadTopics();
+</script>
+</body>
+</html>
