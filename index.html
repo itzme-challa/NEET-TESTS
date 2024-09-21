@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase File Viewer</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 1000px;
+            width: 100%;
+            height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .search-bar {
+            margin-bottom: 20px;
+            position: sticky;
+            top: 0;
+            background: #ffffff;
+            padding: 10px;
+            z-index: 1;
+        }
+
+        .search-bar input[type="text"] {
+            width: calc(100% - 120px);
+            padding: 12px;
+            font-size: 16px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin-right: 10px;
+        }
+
+        .search-bar .btn {
+            padding: 12px 24px;
+            font-size: 16px;
+            color: #ffffff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .search-bar .btn:hover {
+            background-color: #0056b3;
+        }
+
+        h1 {
+            font-size: 32px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .status {
+            margin-top: 10px;
+            font-size: 16px;
+            color: #333;
+            text-align: center;
+        }
+
+        .status.success {
+            color: #28a745;
+        }
+
+        .status.error {
+            color: #dc3545;
+        }
+
+        .file-list {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .file-list ul {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .file-list li {
+            margin-bottom: 12px;
+        }
+
+        .folder-item,
+        .file-item {
+            display: block;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .folder-item:hover,
+        .file-item:hover {
+            background: #e2e6ea;
+        }
+
+        .file-item a {
+            text-decoration: none;
+            color: #007bff;
+            font-size: 16px;
+            display: inline-flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .file-item a:hover {
+            text-decoration: underline;
+        }
+
+        .file-date {
+            font-size: 14px;
+            color: #666;
+            margin-left: auto;
+            padding-left: 10px;
+        }
+
+        .collapsible-content {
+            display: none;
+            padding-left: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-radius: 50%;
+            border-top: 4px solid #007bff;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="search-bar">
+            <input type="text" id="searchInput" placeholder="Search files and folders...">
+            <button class="btn" onclick="displayFiles()">Refresh</button>
+        </div>
+        <h1><i class="fas fa-folder-open"></i> TEST SERIES FREE</h1>
+        <div id="loading" class="spinner" style="display: none;"></div>
+        <div id="fileList" class="file-list"></div>
+        <div id="status" class="status"></div>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-database.js"></script>
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAolcB_o6f1CQPbLSYrMKTYaz_xYs54khY",
+            authDomain: "quizapp-1ae20.firebaseapp.com",
+            databaseURL: "https://quizapp-1ae20-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "quizapp-1ae20",
+            storageBucket: "quizapp-1ae20.appspot.com",
+            messagingSenderId: "626886802317",
+            appId: "1:626886802317:web:df08c307697ca235c45bc4",
+            measurementId: "G-NKJTC5C1XW"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+
+        // Handle user authentication
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                displayFiles();
+            } else {
+                login();
+            }
+        });
+
+        function login() {
+            const email = prompt("Enter your email:");
+            const password = prompt("Enter your password:");
+            firebase.auth().signInWithEmailAndPassword(email, password).catch(error => {
+                console.error('Login failed:', error);
+                alert(error.message);
+                login(); // Prompt again if login fails
+            });
+        }
+
+        function displayFiles() {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('fileList').innerHTML = '';
+
+            database.ref('files').once('value').then(snapshot => {
+                const folders = {};
+                const files = [];
+
+                snapshot.forEach(childSnapshot => {
+                    const fileData = childSnapshot.val();
+                    const { folder, subfolder, name, url, date, uid } = fileData;
+
+                    // Only include files belonging to the authenticated user
+                    if (uid === firebase.auth().currentUser.uid) {
+                        const formattedDate = new Date(date).toLocaleDateString();
+
+                        if (!folders[folder]) {
+                            folders[folder] = {};
+                        }
+
+                        if (subfolder) {
+                            if (!folders[folder][subfolder]) {
+                                folders[folder][subfolder] = [];
+                            }
+                            folders[folder][subfolder].push({ name, url, date: formattedDate });
+                        } else {
+                            files.push({ name, url, date: formattedDate });
+                        }
+                    }
+                });
+
+                // Create folder list
+                const folderList = document.createElement('ul');
+
+                // Add top-level folders
+                Object.keys(folders).forEach(folder => {
+                    const folderItem = document.createElement('li');
+                    folderItem.className = 'folder-item';
+                    folderItem.innerHTML = `<i class="fas fa-folder toggle"></i> ${folder}`;
+                    folderList.appendChild(folderItem);
+
+                    // Create collapsible content for subfolders
+                    const collapsibleContent = document.createElement('div');
+                    collapsibleContent.className = 'collapsible-content';
+
+                    Object.keys(folders[folder]).forEach(subfolder => {
+                        const subfolderItem = document.createElement('li');
+                        subfolderItem.className = 'folder-item';
+                        subfolderItem.innerHTML = `<i class="fas fa-folder-open toggle"></i> ${subfolder}`;
+                        collapsibleContent.appendChild(subfolderItem);
+
+                        // Add files in subfolder
+                        folders[folder][subfolder].forEach(file => {
+                            const fileItem = document.createElement('li');
+                            fileItem.className = 'file-item';
+                            fileItem.innerHTML = `<a href="${file.url}" target="_blank"><i class="fas fa-file"></i> ${file.name}<span class="file-date">${file.date}</span></a>`;
+                            subfolderItem.appendChild(fileItem);
+                        });
+                    });
+
+                    folderItem.appendChild(collapsibleContent);
+
+                    // Toggle visibility of collapsible content
+                    folderItem.addEventListener('click', () => {
+                        const content = folderItem.querySelector('.collapsible-content');
+                        content.style.display = content.style.display === 'none' || content.style.display === '' ? 'block' : 'none';
+                    });
+                });
+
+                // Add files with no subfolder
+                const fileList = document.createElement('ul');
+                files.forEach(file => {
+                    const fileItem = document.createElement('li');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `<a href="${file.url}" target="_blank"><i class="fas fa-file"></i> ${file.name}<span class="file-date">${file.date}</span></a>`;
+                    fileList.appendChild(fileItem);
+                });
+
+                document.getElementById('fileList').appendChild(folderList);
+                document.getElementById('fileList').appendChild(fileList);
+                document.getElementById('loading').style.display = 'none';
+            }).catch(error => {
+                console.error('Error loading files:', error);
+                document.getElementById('fileList').innerHTML = `<div class="status error">Error loading files: ${error.message}</div>`;
+                document.getElementById('loading').style.display = 'none';
+            });
+        }
+
+        // Search functionality
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            const folderItems = document.querySelectorAll('.folder-item');
+            const fileItems = document.querySelectorAll('.file-item a');
+
+            folderItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(query) ? 'block' : 'none';
+                const collapsibleContent = item.nextElementSibling;
+                if (collapsibleContent) {
+                    collapsibleContent.style.display = text.includes(query) ? 'block' : 'none';
+                }
+            });
+
+            fileItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.parentElement.style.display = text.includes(query) ? 'block' : 'none';
+            });
+        });
+    </script>
+</body>
+</html>
