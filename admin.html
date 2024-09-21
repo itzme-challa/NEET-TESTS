@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Firebase Multi-File Upload with Authentication</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        .container {
+            background: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            max-width: 800px;
+            width: 100%;
+        }
+        h1 {
+            font-size: 24px;
+            color: #333;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #555;
+        }
+        .input-group input[type="text"],
+        .input-group input[type="file"] {
+            display: block;
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            font-size: 16px;
+            color: #ffffff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-align: center;
+            text-decoration: none;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .status {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+        .status.success {
+            color: #28a745;
+        }
+        .status.error {
+            color: #dc3545;
+        }
+        .file-list {
+            margin-top: 20px;
+        }
+        .file-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #f9f9f9;
+        }
+        .file-item a {
+            color: #007bff;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        .file-item a:hover {
+            text-decoration: underline;
+        }
+        .progress-bar-container {
+            margin-top: 10px;
+            width: 100%;
+            background-color: #f3f3f3;
+            border-radius: 5px;
+            overflow: hidden;
+            position: relative;
+        }
+        .progress-bar {
+            height: 20px;
+            background-color: #007bff;
+            width: 0;
+            text-align: center;
+            color: #fff;
+            line-height: 20px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            border-radius: 5px;
+        }
+        .progress-text {
+            position: absolute;
+            width: 100%;
+            text-align: center;
+            line-height: 20px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            width: 300px;
+        }
+        .modal-content h2 {
+            margin-top: 0;
+        }
+        .modal-content input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        .modal-content button {
+            width: 100%;
+            padding: 10px;
+            font-size: 16px;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        .modal-content button:hover {
+            background-color: #0056b3;
+        }
+        .modal-content .close {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 20px;
+            cursor: pointer;
+        }
+        .account-info {
+            margin-bottom: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+        .file-list {
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .file-item {
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><i class="fas fa-upload icon"></i> Upload Files to Firebase</h1>
+
+        <div id="authModal" class="modal">
+            <div class="modal-content">
+                <span class="close" id="closeModal">&times;</span>
+                <h2>Sign In / Sign Up</h2>
+                <div class="input-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" placeholder="Enter your email" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" placeholder="Enter your password" required>
+                </div>
+                <button id="authButton">Sign In / Sign Up</button>
+                <div id="authStatus" class="status"></div>
+            </div>
+        </div>
+
+        <div class="account-info" id="accountInfo" style="display: none;">
+            <strong>Account:</strong> <span id="accountEmail"></span> | <button id="logoutButton" class="btn">Logout</button>
+        </div>
+
+        <div class="input-group">
+            <label for="folderName"><i class="fas fa-folder icon"></i> Folder Name:</label>
+            <input type="text" id="folderName" placeholder="Enter folder name..." required>
+        </div>
+        <div class="input-group">
+            <label for="subFolderName"><i class="fas fa-folder-plus icon"></i> Subfolder Name (optional):</label>
+            <input type="text" id="subFolderName" placeholder="Enter subfolder name...">
+        </div>
+        <div class="input-group">
+            <label for="fileInput"><i class="fas fa-file-upload icon"></i> Select Files:</label>
+            <input type="file" id="fileInput" multiple>
+        </div>
+        <button id="uploadButton" class="btn"><i class="fas fa-cloud-upload-alt"></i> Upload</button>
+        <div id="status" class="status"></div>
+
+        <div id="fileList" class="file-list">
+            <h2><i class="fas fa-list icon"></i> Uploaded Files</h2>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAolcB_o6f1CQPbLSYrMKTYaz_xYs54khY",
+            authDomain: "quizapp-1ae20.firebaseapp.com",
+            databaseURL: "https://quizapp-1ae20-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "quizapp-1ae20",
+            storageBucket: "quizapp-1ae20.appspot.com",
+            messagingSenderId: "626886802317",
+            appId: "1:626886802317:web:df08c307697ca235c45bc4",
+            measurementId: "G-NKJTC5C1XW"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+
+        const auth = firebase.auth();
+        const storage = firebase.storage();
+        const database = firebase.database();
+
+        const authModal = document.getElementById('authModal');
+        const authButton = document.getElementById('authButton');
+        const closeModal = document.getElementById('closeModal');
+        const authStatus = document.getElementById('authStatus');
+        const accountInfo = document.getElementById('accountInfo');
+        const accountEmail = document.getElementById('accountEmail');
+        const logoutButton = document.getElementById('logoutButton');
+        const uploadButton = document.getElementById('uploadButton');
+
+        function showAuthModal() {
+            authModal.style.display = 'flex';
+        }
+
+        closeModal.addEventListener('click', () => {
+            authModal.style.display = 'none';
+        });
+
+        authButton.addEventListener('click', () => {
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value.trim();
+
+            if (email && password) {
+                auth.signInWithEmailAndPassword(email, password)
+                    .catch(() => auth.createUserWithEmailAndPassword(email, password))
+                    .catch((error) => {
+                        authStatus.textContent = `Error: ${error.message}`;
+                        authStatus.className = 'status error';
+                    });
+            } else {
+                authStatus.textContent = 'Please enter both email and password.';
+                authStatus.className = 'status error';
+            }
+        });
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                accountEmail.textContent = user.email;
+                accountInfo.style.display = 'block';
+                uploadButton.disabled = false;
+                authModal.style.display = 'none';
+                loadFileList();
+            } else {
+                accountInfo.style.display = 'none';
+                uploadButton.disabled = true;
+                showAuthModal();
+            }
+        });
+
+        logoutButton.addEventListener('click', () => {
+            auth.signOut().then(() => {
+                accountInfo.style.display = 'none';
+                showAuthModal();
+            }).catch((error) => {
+                console.error('Sign Out Error', error);
+            });
+        });
+
+        document.getElementById('uploadButton').addEventListener('click', () => {
+            if (!auth.currentUser) {
+                showAuthModal();
+                return;
+            }
+
+            const folderName = document.getElementById('folderName').value.trim();
+            const subFolderName = document.getElementById('subFolderName').value.trim();
+            const fileInput = document.getElementById('fileInput');
+            const files = fileInput.files;
+
+            if (files.length === 0) {
+                document.getElementById('status').textContent = 'No files selected';
+                document.getElementById('status').className = 'status error';
+                return;
+            }
+
+            if (!folderName) {
+                document.getElementById('status').textContent = 'Folder name is required';
+                document.getElementById('status').className = 'status error';
+                return;
+            }
+
+            let path = folderName;
+            if (subFolderName) {
+                path += `/${subFolderName}`;
+            }
+
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = 'Uploading...';
+            statusElement.className = 'status';
+
+            Array.from(files).forEach(file => {
+                const storageRef = storage.ref(`${path}/${file.name}`);
+                const uploadTask = storageRef.put(file);
+
+                const progressContainer = document.createElement('div');
+                progressContainer.className = 'progress-bar-container';
+                const progressBar = document.createElement('div');
+                progressBar.className = 'progress-bar';
+                const progressText = document.createElement('div');
+                progressText.className = 'progress-text';
+                progressContainer.appendChild(progressBar);
+                progressContainer.appendChild(progressText);
+                statusElement.appendChild(progressContainer);
+
+                uploadTask.on('state_changed', (snapshot) => {
+                    const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                    progressBar.style.width = progress + '%';
+                    progressText.textContent = Math.round(progress) + '%';
+                }, (error) => {
+                    console.error('Upload failed:', error);
+                    progressText.textContent = `Error: ${error.message}`;
+                    progressBar.style.backgroundColor = '#dc3545';
+                }, () => {
+                    uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
+                        const fileData = {
+                            name: file.name,
+                            url: downloadURL,
+                            date: new Date().toISOString(),
+                            folder: folderName,
+                            subfolder: subFolderName || '',
+                            uid: auth.currentUser.uid
+                        };
+
+                        database.ref('files').push(fileData, (error) => {
+                            if (error) {
+                                console.error('Error saving file data:', error);
+                                statusElement.textContent = `Error saving file data: ${error.message}`;
+                                statusElement.className = 'status error';
+                            } else {
+                                statusElement.textContent = 'Files uploaded and data saved successfully';
+                                statusElement.className = 'status success';
+                                fileInput.value = '';
+                                document.getElementById('folderName').value = '';
+                                document.getElementById('subFolderName').value = '';
+                                loadFileList();
+                            }
+                        });
+                    }).catch((error) => {
+                        console.error('Error getting download URL:', error);
+                        statusElement.textContent = `Error getting download URL: ${error.message}`;
+                        statusElement.className = 'status error';
+                    });
+                });
+            });
+        });
+
+        function loadFileList() {
+            const fileListElement = document.getElementById('fileList');
+            fileListElement.innerHTML = '<h2><i class="fas fa-list icon"></i> Uploaded Files</h2>';
+
+            database.ref('files').orderByChild('uid').equalTo(auth.currentUser.uid).once('value').then((snapshot) => {
+                snapshot.forEach((childSnapshot) => {
+                    const fileData = childSnapshot.val();
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item';
+                    fileItem.innerHTML = `
+                        <div class="file-name">${fileData.name} (${fileData.folder}/${fileData.subfolder})</div>
+                        <a href="${fileData.url}" class="file-link" target="_blank"><i class="fas fa-link"></i> View</a>
+                    `;
+                    fileListElement.appendChild(fileItem);
+                });
+            }).catch((error) => {
+                console.error('Error loading file list:', error);
+                const statusElement = document.getElementById('status');
+                statusElement.textContent = `Error loading file list: ${error.message}`;
+                statusElement.className = 'status error';
+            });
+        }
+
+        loadFileList();
+    </script>
+</body>
+</html>
