@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Responsive Full-Screen PDF Viewer with Offline Support</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        h2 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .search-container {
+            margin-bottom: 20px;
+        }
+        .search-container input {
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            width: 100%;
+            max-width: 300px;
+            transition: border-color 0.3s;
+        }
+        .search-container input:focus {
+            border-color: #3498db;
+        }
+        .pdf-list {
+            list-style-type: none;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+        .pdf-list li {
+            background: #ffffff;
+            margin: 10px 0;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            width: 80%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: background 0.3s;
+        }
+        .pdf-list li:hover {
+            background: #e9ecef;
+        }
+        .pdf-list span {
+            font-size: 16px;
+            font-weight: bold;
+            flex-grow: 1;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .pdf-list button {
+            width: 36px;
+            height: 36px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .pdf-list button:hover {
+            transform: scale(1.1);
+        }
+        .viewer {
+            display: none; /* Hide viewer by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        iframe {
+            border: none;
+            width: 100vw; /* Full width */
+            height: 100vh; /* Full height */
+        }
+        .loader {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            display: none; /* Hide loader by default */
+        }
+        .loader div {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(0, 0, 0, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid #3498db;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .close-btn:hover {
+            background-color: #2980b9;
+        }
+        /* Responsive styles */
+        @media (max-width: 600px) {
+            h2 {
+                font-size: 1.5em;
+            }
+            .pdf-list span {
+                font-size: 14px; /* Smaller text for small screens */
+            }
+            .search-container input {
+                max-width: 100%; /* Full width on smaller screens */
+            }
+            .pdf-list li {
+                flex-direction: column; /* Stack items vertically */
+                align-items: flex-start; /* Align items to start */
+            }
+            .pdf-list button {
+                width: 30px; /* Smaller buttons */
+                height: 30px; /* Smaller buttons */
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <h2>Responsive Full-Screen PDF Viewer with Offline Support</h2>
+    <div class="search-container">
+        <input type="text" id="searchInput" placeholder="Search PDFs..." oninput="filterPDFs()">
+    </div>
+    <ul class="pdf-list" id="pdfList">
+        <li>
+            <span>Sample PDF 1</span>
+            <div>
+                <button onclick="openPDF('http://www.pdf995.com/samples/pdf.pdf')"><i class="fas fa-eye"></i></button>
+                <button onclick="downloadPDF('http://www.pdf995.com/samples/pdf.pdf')"><i class="fas fa-download"></i></button>
+            </div>
+        </li>
+        <li>
+            <span>Sample PDF 2</span>
+            <div>
+                <button onclick="openPDF('https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf')"><i class="fas fa-eye"></i></button>
+                <button onclick="downloadPDF('https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf')"><i class="fas fa-download"></i></button>
+            </div>
+        </li>
+        <li>
+            <span>Apollo 17 Flight Plan</span>
+            <div>
+                <button onclick="openPDF('https://www.hq.nasa.gov/alsj/a17/A17_FlightPlan.pdf')"><i class="fas fa-eye"></i></button>
+                <button onclick="downloadPDF('https://www.hq.nasa.gov/alsj/a17/A17_FlightPlan.pdf')"><i class="fas fa-download"></i></button>
+            </div>
+        </li>
+        <li>
+            <span>Yakeen NEET PLUS Practice Test 01</span>
+            <div>
+                <button onclick="openPDF('https://firebasestorage.googleapis.com/v0/b/quizapp-1ae20.appspot.com/o/Physics%20Wallah%202025%2FYakeen%20NEET%20PLUS%2FPractice%20Test%2001%20%20Test%20Paper%20%20Yakeen%20Plus%202025.pdf?alt=media&token=b5ba5129-c688-482d-bd56-a8c30002f183')"><i class="fas fa-eye"></i></button>
+                <button onclick="downloadPDF('https://firebasestorage.googleapis.com/v0/b/quizapp-1ae20.appspot.com/o/Physics%20Wallah%202025%2FYakeen%20NEET%20PLUS%2FPractice%20Test%2001%20%20Test%20Paper%20%20Yakeen%20Plus%202025.pdf?alt=media&token=b5ba5129-c688-482d-bd56-a8c30002f183')"><i class="fas fa-download"></i></button>
+            </div>
+        </li>
+    </ul>
+
+    <div class="viewer" id="pdfContainer" role="dialog" aria-labelledby="pdfTitle" aria-describedby="pdfDescription">
+        <button class="close-btn" onclick="closePDF()"><i class="fas fa-times"></i></button>
+        <div class="loader" id="loader">
+            <div></div>
+        </div>
+        <iframe id="pdfViewer" src="" title="PDF Viewer"></iframe>
+    </div>
+
+    <script>
+        // Register service worker
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js').then(function(registration) {
+                console.log('Service Worker registered with scope:', registration.scope);
+            }).catch(function(error) {
+                console.log('Service Worker registration failed:', error);
+            });
+        }
+
+        function openPDF(url) {
+            const viewer = document.getElementById('pdfViewer');
+            const loader = document.getElementById('loader');
+            const container = document.getElementById('pdfContainer');
+            document.body.style.padding = '0'; // Remove body padding for full screen
+
+            loader.style.display = 'block'; // Show loader
+            viewer.src = url;
+
+            // Hide loader once the PDF is loaded
+            viewer.onload = function() {
+                loader.style.display = 'none'; // Hide loader
+            };
+
+            container.style.display = 'flex'; // Show viewer
+        }
+
+        function closePDF() {
+            const viewer = document.getElementById('pdfViewer');
+            const loader = document.getElementById('loader');
+            viewer.src = ""; // Clear the iframe
+            loader.style.display = 'none'; // Hide loader
+            document.getElementById('pdfContainer').style.display = 'none'; // Hide viewer
+            document.body.style.padding = '20px'; // Restore body padding
+        }
+
+        function downloadPDF(url) {
+            const link = document.createElement('a');
+            link.href = url; // Use the provided URL
+            link.download = ''; // Set the download attribute to prompt download
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link); // Clean up
+        }
+
+        function filterPDFs() {
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+            const pdfList = document.getElementById('pdfList').getElementsByTagName('li');
+            
+            for (let i = 0; i < pdfList.length; i++) {
+                const pdfTitle = pdfList[i].getElementsByTagName('span')[0].innerText.toLowerCase();
+                pdfList[i].style.display = pdfTitle.includes(searchInput) ? '' : 'none';
+            }
+        }
+    </script>
+
+</body>
+</html>
