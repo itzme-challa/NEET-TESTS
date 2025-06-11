@@ -6,12 +6,28 @@
     <title>PDF Viewer</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        #pdfCanvas {
+            width: 100%;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+        }
+        .pdf-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+    </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
     <header class="bg-white shadow p-4">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold text-gray-800">PDF Viewer</h1>
-            <a href="index.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Back to Files</a>
+            <a href="index.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                <i class="fas fa-arrow-left mr-2"></i>Back to Files
+            </a>
         </div>
     </header>
     <main class="flex-grow container mx-auto p-4">
@@ -19,13 +35,23 @@
             <div class="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-600"></div>
         </div>
         <div id="pdfViewer" class="bg-white rounded-lg shadow p-4 hidden">
-            <iframe id="pdfFrame" class="w-full h-[80vh] rounded" frameborder="0"></iframe>
+            <div class="pdf-controls">
+                <button id="prevPage" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400" disabled>
+                    <i class="fas fa-chevron-left"></i> Previous
+                </button>
+                <span id="pageInfo" class="text-gray-700 font-medium">Page 1 of 1</span>
+                <button id="nextPage" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400" disabled>
+                    Next <i class="fas fa-chevron-right"></i>
+                </button>
+            </div>
+            <canvas id="pdfCanvas" class="mx-auto"></canvas>
         </div>
         <div id="status" class="text-center mt-4"></div>
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyAolcB_o6f1CQPbLSYrMKTYaz_xYs54khY",
@@ -40,10 +66,58 @@
 
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        let pdfDoc = null;
+        let pageNum = 1;
+        let pageRendering = false;
+        let pageNumPending = null;
+
+        const canvas = document.getElementById('pdfCanvas');
+        const ctx = canvas.getContext('2d');
+        const prevPageBtn = document.getElementById('prevPage');
+        const nextPageBtn = document.getElementById('nextPage');
+        const pageInfo = document.getElementById('pageInfo');
 
         function getQueryParam(param) {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get(param);
+        }
+
+        function renderPage(num) {
+            pageRendering = true;
+            pdfDoc.getPage(num).then(page => {
+                const viewport = page.getViewport({ scale: 1.5 });
+                canvas.height = viewport.height;
+                canvas.width = viewport.width;
+
+                const renderContext = {
+                    canvasContext: ctx,
+                    viewport: viewport
+                };
+                const renderTask = page.render(renderContext);
+
+                renderTask.promise.then(() => {
+                    pageRendering = false;
+                    if (pageNumPending !== null) {
+                        renderPage(pageNumPending);
+                        pageNumPending = null;
+                    }
+                });
+
+                pageInfo.textContent = `Page ${num} of ${pdfDoc.numPages}`;
+                prevPageBtn.disabled = num <= 1;
+                nextPageBtn.disabled = num >= pdfDoc.numPages;
+            }).catch(error => {
+                document.getElementById('status').innerHTML = `<div class="text-red-500">Error rendering page: ${error.message}</div>`;
+                document.getElementById('loading').style.display = 'none';
+            });
+        }
+
+        function queueRenderPage(num) {
+            if (pageRendering) {
+                pageNumPending = num;
+            } else {
+                renderPage(num);
+            }
         }
 
         function loadPDF() {
@@ -59,19 +133,39 @@
                     if (snapshot.exists()) {
                         snapshot.forEach(childSnapshot => {
                             const fileData = childSnapshot.val();
-                            document.getElementById('pdfFrame').src = fileData.url;
-                            document.getElementById('pdfViewer').style.display = 'block';
+                            pdfjsLib.getDocument(fileData.url).promise.then(pdf => {
+                                pdfDoc = pdf;
+                                document.getElementById('pdfViewer').style.display = 'block';
+                                document.getElementById('loading').style.display = 'none';
+                                pageNum = 1;
+                                renderPage(pageNum);
+                            }).catch(error => {
+                                document.getElementById('status').innerHTML = `<div class="text-red-500">Error loading PDF: ${error.message}</div>`;
+                                document.getElementById('loading').style.display = 'none';
+                            });
                         });
                     } else {
                         document.getElementById('status').innerHTML = '<div class="text-red-500">PDF not found</div>';
+                        document.getElementById('loading').style.display = 'none';
                     }
-                    document.getElementById('loading').style.display = 'none';
                 })
                 .catch(error => {
                     document.getElementById('status').innerHTML = `<div class="text-red-500">Error: ${error.message}</div>`;
                     document.getElementById('loading').style.display = 'none';
                 });
         }
+
+        prevPageBtn.addEventListener('click', () => {
+            if (pageNum <= 1) return;
+            pageNum--;
+            queueRenderPage(pageNum);
+        });
+
+        nextPageBtn.addEventListener('click', () => {
+            if (pageNum >= pdfDoc.numPages) return;
+            pageNum++;
+            queueRenderPage(pageNum);
+        });
 
         loadPDF();
     </script>
