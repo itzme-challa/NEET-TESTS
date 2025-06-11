@@ -11,14 +11,15 @@
             max-height: calc(100vh - 120px);
             overflow-y: auto;
             scroll-snap-type: y mandatory;
-            scrollbar-width: none; /* Firefox */
+            scrollbar-width: none;
         }
         #pdfViewer::-webkit-scrollbar {
-            display: none; /* Chrome, Safari */
+            display: none;
         }
         .page-container {
             scroll-snap-align: start;
             margin-bottom: 1rem;
+            position: relative;
         }
         .page-canvas {
             width: 100%;
@@ -37,6 +38,55 @@
             font-size: 0.875rem;
             font-weight: 500;
         }
+        #sidebar {
+            width: 200px;
+            background: #f9fafb;
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+        }
+        #sidebar.hidden {
+            transform: translateX(-100%);
+        }
+        .thumbnail {
+            cursor: pointer;
+            border: 2px solid transparent;
+            margin: 0.5rem;
+            border-radius: 4px;
+        }
+        .thumbnail:hover {
+            border-color: #3b82f6;
+        }
+        .annotation {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #ef4444;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        .annotation-popup {
+            display: none;
+            position: absolute;
+            background: white;
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 0.5rem;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            z-index: 10;
+        }
+        #fullscreenViewer {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: black;
+            z-index: 20;
+            display: none;
+        }
+        #fullscreenViewer.active {
+            display: block;
+        }
         #downloadSection {
             display: none;
             text-align: center;
@@ -49,31 +99,61 @@
             <h1 class="text-xl font-bold text-gray-800 flex items-center">
                 <i class="fas fa-file-pdf mr-2 text-red-500"></i> PDF Viewer
             </h1>
-            <div class="flex items-center space-x-4">
-                <a id="downloadButton" href="#" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 hidden">
-                    <i class="fas fa-download mr-2"></i> Download
+            <div class="flex items-center space-x-2">
+                <input id="searchInput" type="text" placeholder="Search in PDF..." class="px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hidden">
+                <button id="toggleSidebar" class="bg-gray-600 text-white px-3 py-1 rounded-lg hover:bg-gray-700">
+                    <i class="fas fa-th-list"></i>
+                </button>
+                <button id="zoomIn" class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-search-plus"></i>
+                </button>
+                <button id="zoomOut" class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-search-minus"></i>
+                </button>
+                <span id="zoomLevel" class="text-gray-700 font-medium">100%</span>
+                <button id="fullscreenBtn" class="bg-purple-600 text-white px-3 py-1 rounded-lg hover:bg-purple-700">
+                    <i class="fas fa-expand"></i>
+                </button>
+                <button id="printBtn" class="bg-yellow-600 text-white px-3 py-1 rounded-lg hover:bg-yellow-700 hidden">
+                    <i class="fas fa-print"></i>
+                </button>
+                <a id="downloadButton" href="#" class="bg-green-600 text-white px-3 py-1 rounded-lg hover:bg-green-700 hidden">
+                    <i class="fas fa-download"></i>
                 </a>
-                <a href="index.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
-                    <i class="fas fa-arrow-left mr-2"></i> Back to Files
+                <a href="index.html" class="bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-arrow-left"></i>
                 </a>
             </div>
         </div>
     </header>
-    <main class="flex-grow container mx-auto p-4">
-        <div id="loading" class="flex justify-center items-center h-64">
-            <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
+    <main class="flex-grow container mx-auto p-4 flex">
+        <div id="sidebar" class="hidden fixed md:static h-[calc(100vh-120px)] z-10">
+            <div id="thumbnails" class="p-2"></div>
         </div>
-        <div id="pdfViewer" class="bg-white rounded-lg shadow-lg p-4 hidden"></div>
-        <div id="downloadSection" class="bg-white rounded-lg shadow-lg p-6">
-            <h2 class="text-lg font-semibold text-gray-800 mb-4">Unable to Load PDF</h2>
-            <p class="text-gray-600 mb-4">The PDF could not be loaded. You can download it instead.</p>
-            <a id="downloadLink" href="#" class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 inline-flex items-center">
-                <i class="fas fa-download mr-2"></i> Download PDF
-            </a>
+        <div class="flex-grow">
+            <div id="loading" class="flex justify-center items-center h-64">
+                <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
+            </div>
+            <div id="pdfViewer" class="bg-white rounded-lg shadow-lg p-4 hidden"></div>
+            <div id="downloadSection" class="bg-white rounded-lg shadow-lg p-6">
+                <h2 class="text-lg font-semibold text-gray-800 mb-4">Unable to Load PDF</h2>
+                <p class="text-gray-600 mb-4">The PDF could not be loaded. Please download it instead.</p>
+                <a id="downloadLink" href="#" class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 inline-flex items-center">
+                    <i class="fas fa-download mr-2"></i> Download PDF
+                </a>
+            </div>
+            <div id="status" class="text-center mt-4"></div>
+            <div id="pageInfo" class="hidden"></div>
         </div>
-        <div id="status" class="text-center mt-4"></div>
-        <div id="pageInfo" class="hidden"></div>
     </main>
+    <div id="fullscreenViewer">
+        <div id="fullscreenControls" class="absolute top-4 right-4 flex space-x-2 bg-black bg-opacity-50 p-2 rounded-lg">
+            <button id="exitFullscreen" class="text-white hover:text-gray-300">
+                <i class="fas fa-compress"></i>
+            </button>
+        </div>
+        <div id="fullscreenPdfViewer" class="h-full overflow-y-auto"></div>
+    </div>
 
     <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-database.js"></script>
@@ -94,42 +174,155 @@
         const database = firebase.database();
         let pdfDoc = null;
         let pdfUrl = '';
-        const scale = 1.5;
+        let scale = 1.5;
+        let annotations = JSON.parse(localStorage.getItem('pdfAnnotations') || '{}');
         const pdfViewer = document.getElementById('pdfViewer');
+        const fullscreenPdfViewer = document.getElementById('fullscreenPdfViewer');
         const downloadSection = document.getElementById('downloadSection');
         const downloadButton = document.getElementById('downloadButton');
         const downloadLink = document.getElementById('downloadLink');
         const pageInfo = document.getElementById('pageInfo');
         const status = document.getElementById('status');
         const loading = document.getElementById('loading');
+        const sidebar = document.getElementById('sidebar');
+        const thumbnails = document.getElementById('thumbnails');
+        const toggleSidebar = document.getElementById('toggleSidebar');
+        const zoomIn = document.getElementById('zoomIn');
+        const zoomOut = document.getElementById('zoomOut');
+        const zoomLevel = document.getElementById('zoomLevel');
+        const fullscreenBtn = document.getElementById('fullscreenBtn');
+        const exitFullscreen = document.getElementById('exitFullscreen');
+        const fullscreenViewer = document.getElementById('fullscreenViewer');
+        const printBtn = document.getElementById('printBtn');
+        const searchInput = document.getElementById('searchInput');
 
         function getQueryParam(param) {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get(param);
         }
 
-        function renderPages() {
-            pdfViewer.innerHTML = '';
+        function updateZoom(newScale) {
+            scale = Math.min(Math.max(newScale, 0.5), 2.0);
+            zoomLevel.textContent = `${Math.round(scale * 100)}%`;
+            renderPages(pdfViewer);
+            if (fullscreenViewer.classList.contains('active')) {
+                renderPages(fullscreenPdfViewer);
+            }
+        }
+
+        function renderPage(page, canvas, container) {
+            const viewport = page.getViewport({ scale });
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+            canvas.className = 'page-canvas';
+            container.appendChild(canvas);
+
+            const renderContext = {
+                canvasContext: canvas.getContext('2d'),
+                viewport: viewport
+            };
+            page.render(renderContext).promise.catch(error => {
+                console.error(`Error rendering page:`, error);
+            });
+
+            const pageNum = parseInt(canvas.dataset.page);
+            if (annotations[pageNum]) {
+                annotations[pageNum].forEach((note, index) => {
+                    const marker = document.createElement('div');
+                    marker.className = 'annotation';
+                    marker.style.left = `${note.x}px`;
+                    marker.style.top = `${note.y}px`;
+                    container.appendChild(marker);
+
+                    const popup = document.createElement('div');
+                    popup.className = 'annotation-popup';
+                    popup.innerHTML = `
+                        <textarea class="w-48 p-1 border rounded">${note.text}</textarea>
+                        <button class="bg-red-600 text-white px-2 py-1 rounded mt-1">Delete</button>`;
+                    container.appendChild(popup);
+
+                    marker.addEventListener('click', () => {
+                        popup.style.display = popup.style.display === 'block' ? 'none' : 'block';
+                        popup.style.left = `${note.x + 20}px`;
+                        popup.style.top = `${note.y}px`;
+                    });
+
+                    popup.querySelector('textarea').addEventListener('change', e => {
+                        annotations[pageNum][index].text = e.target.value;
+                        localStorage.setItem('pdfAnnotations', JSON.stringify(annotations));
+                    });
+
+                    popup.querySelector('button').addEventListener('click', () => {
+                        annotations[pageNum].splice(index, 1);
+                        if (annotations[pageNum].length === 0) delete annotations[pageNum];
+                        localStorage.setItem('pdfAnnotations', JSON.stringify(annotations));
+                        container.removeChild(marker);
+                        container.removeChild(popup);
+                    });
+                });
+            }
+
+            canvas.addEventListener('click', e => {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+
+                if (!annotations[pageNum]) annotations[pageNum] = [];
+                annotations[pageNum].push({ x, y, text: 'New note' });
+                localStorage.setItem('pdfAnnotations', JSON.stringify(annotations));
+                renderPages(pdfViewer);
+            });
+        }
+
+        function renderPages(container) {
+            container.innerHTML = '';
+            const visiblePages = new Set();
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const pageNum = parseInt(entry.target.dataset.page);
+                        visiblePages.add(pageNum);
+                        if (!entry.target.children.length) {
+                            pdfDoc.getPage(pageNum).then(page => {
+                                const canvas = document.createElement('canvas');
+                                canvas.dataset.page = pageNum;
+                                renderPage(page, canvas, entry.target);
+                            });
+                        }
+                    }
+                });
+            }, { threshold: 0.1 });
+
             for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
                 const pageContainer = document.createElement('div');
                 pageContainer.className = 'page-container';
-                const canvas = document.createElement('canvas');
-                canvas.className = 'page-canvas';
-                pageContainer.appendChild(canvas);
-                pdfViewer.appendChild(pageContainer);
+                pageContainer.dataset.page = pageNum;
+                container.appendChild(pageContainer);
+                observer.observe(pageContainer);
+            }
+        }
 
+        function renderThumbnails() {
+            thumbnails.innerHTML = '';
+            for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
                 pdfDoc.getPage(pageNum).then(page => {
-                    const viewport = page.getViewport({ scale });
-                    canvas.height = viewport.height;
+                    const viewport = page.getViewport({ scale: 0.2 });
+                    const canvas = document.createElement('canvas');
+                    canvas.className = 'thumbnail';
                     canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    thumbnails.appendChild(canvas);
 
                     const renderContext = {
                         canvasContext: canvas.getContext('2d'),
                         viewport: viewport
                     };
                     page.render(renderContext);
-                }).catch(error => {
-                    console.error(`Error rendering page ${pageNum}:`, error);
+
+                    canvas.addEventListener('click', () => {
+                        const pageContainer = pdfViewer.children[pageNum - 1];
+                        pageContainer.scrollIntoView({ behavior: 'smooth' });
+                    });
                 });
             }
         }
@@ -138,8 +331,7 @@
             const observer = new IntersectionObserver(entries => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        const pageContainer = entry.target;
-                        const pageNum = Array.from(pdfViewer.children).indexOf(pageContainer) + 1;
+                        const pageNum = Array.from(pdfViewer.children).indexOf(entry.target) + 1;
                         pageInfo.textContent = `${pageNum} / ${pdfDoc.numPages}`;
                     }
                 });
@@ -153,7 +345,35 @@
             downloadLink.href = url;
             pdfViewer.style.display = 'none';
             pageInfo.style.display = 'none';
+            sidebar.style.display = 'none';
             loading.style.display = 'none';
+        }
+
+        function searchPDF(query) {
+            if (!query) return;
+            status.innerHTML = '<div class="text-blue-600">Searching...</div>';
+            let found = false;
+
+            const searchPage = (pageNum) => {
+                if (pageNum > pdfDoc.numPages) {
+                    status.innerHTML = found ? '' : '<div class="text-red-500">No matches found</div>';
+                    return;
+                }
+
+                pdfDoc.getPage(pageNum).then(page => {
+                    page.getTextContent().then(content => {
+                        const text = content.items.map(item => item.str).join(' ').toLowerCase();
+                        if (text.includes(query.toLowerCase()) && !found) {
+                            found = true;
+                            pdfViewer.children[pageNum - 1].scrollIntoView({ behavior: 'smooth' });
+                            status.innerHTML = '<div class="text-green-500">Match found on page ' + pageNum + '</div>';
+                        }
+                        searchPage(pageNum + 1);
+                    });
+                });
+            };
+
+            searchPage(1);
         }
 
         function loadPDF() {
@@ -172,14 +392,17 @@
                             pdfUrl = fileData.url;
                             downloadButton.href = pdfUrl;
                             downloadButton.classList.remove('hidden');
+                            printBtn.classList.remove('hidden');
 
                             pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
                                 pdfDoc = pdf;
                                 pdfViewer.style.display = 'block';
                                 downloadSection.style.display = 'none';
                                 pageInfo.style.display = 'block';
+                                sidebar.classList.remove('hidden');
                                 loading.style.display = 'none';
-                                renderPages();
+                                renderPages(pdfViewer);
+                                renderThumbnails();
                                 updatePageInfo();
                             }).catch(error => {
                                 console.error('Error loading PDF:', error);
@@ -197,6 +420,54 @@
                     loading.style.display = 'none';
                 });
         }
+
+        toggleSidebar.addEventListener('click', () => {
+            sidebar.classList.toggle('hidden');
+        });
+
+        zoomIn.addEventListener('click', () => updateZoom(scale + 0.25));
+        zoomOut.addEventListener('click', () => updateZoom(scale - 0.25));
+
+        fullscreenBtn.addEventListener('click', () => {
+            fullscreenViewer.classList.add('active');
+            renderPages(fullscreenPdfViewer);
+        });
+
+        exitFullscreen.addEventListener('click', () => {
+            fullscreenViewer.classList.remove('active');
+            fullscreenPdfViewer.innerHTML = '';
+        });
+
+        printBtn.addEventListener('click', () => {
+            window.open(pdfUrl, '_blank').print();
+        });
+
+        searchInput.addEventListener('input', e => {
+            searchInput.classList.remove('hidden');
+            searchPDF(e.target.value);
+        });
+
+        document.addEventListener('keydown', e => {
+            if (e.ctrlKey && e.key === '+') {
+                e.preventDefault();
+                updateZoom(scale + 0.25);
+            } else if (e.ctrlKey && e.key === '-') {
+                e.preventDefault();
+                updateZoom(scale - 0.25);
+            } else if (e.key === 'f' && !searchInput.classList.contains('hidden')) {
+                e.preventDefault();
+                searchInput.classList.toggle('hidden');
+                searchInput.focus();
+            } else if (e.key === 'F11') {
+                e.preventDefault();
+                fullscreenViewer.classList.toggle('active');
+                if (fullscreenViewer.classList.contains('active')) {
+                    renderPages(fullscreenPdfViewer);
+                } else {
+                    fullscreenPdfViewer.innerHTML = '';
+                }
+            }
+        });
 
         loadPDF();
     </script>
