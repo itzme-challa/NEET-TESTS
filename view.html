@@ -50,6 +50,7 @@
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
     <script>
@@ -65,6 +66,7 @@
         };
 
         firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
         const database = firebase.database();
         let pdfDoc = null;
         let pageNum = 1;
@@ -76,6 +78,9 @@
         const prevPageBtn = document.getElementById('prevPage');
         const nextPageBtn = document.getElementById('nextPage');
         const pageInfo = document.getElementById('pageInfo');
+        const statusElement = document.getElementById('status');
+        const loadingElement = document.getElementById('loading');
+        const pdfViewerElement = document.getElementById('pdfViewer');
 
         function getQueryParam(param) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -107,8 +112,8 @@
                 prevPageBtn.disabled = num <= 1;
                 nextPageBtn.disabled = num >= pdfDoc.numPages;
             }).catch(error => {
-                document.getElementById('status').innerHTML = `<div class="text-red-500">Error rendering page: ${error.message}</div>`;
-                document.getElementById('loading').style.display = 'none';
+                statusElement.innerHTML = `<div class="text-red-500">Error rendering page: ${error.message}</div>`;
+                loadingElement.style.display = 'none';
             });
         }
 
@@ -123,8 +128,8 @@
         function loadPDF() {
             const pdfId = getQueryParam('pdfid');
             if (!pdfId) {
-                document.getElementById('status').innerHTML = '<div class="text-red-500">No PDF ID provided</div>';
-                document.getElementById('loading').style.display = 'none';
+                statusElement.innerHTML = '<div class="text-red-500">No PDF ID provided</div>';
+                loadingElement.style.display = 'none';
                 return;
             }
 
@@ -133,25 +138,41 @@
                     if (snapshot.exists()) {
                         snapshot.forEach(childSnapshot => {
                             const fileData = childSnapshot.val();
-                            pdfjsLib.getDocument(fileData.url).promise.then(pdf => {
-                                pdfDoc = pdf;
-                                document.getElementById('pdfViewer').style.display = 'block';
-                                document.getElementById('loading').style.display = 'none';
-                                pageNum = 1;
-                                renderPage(pageNum);
-                            }).catch(error => {
-                                document.getElementById('status').innerHTML = `<div class="text-red-500">Error loading PDF: ${error.message}</div>`;
-                                document.getElementById('loading').style.display = 'none';
-                            });
+                            // Enable worker for PDF.js to handle large files better
+                            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.worker.min.js';
+                            
+                            // Attempt to fetch PDF with CORS workaround
+                            fetch(fileData.url, { method: 'GET', mode: 'cors' })
+                                .then(response => {
+                                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                                    return response.blob();
+                                })
+                                .then(blob => {
+                                    const url = URL.createObjectURL(blob);
+                                    pdfjsLib.getDocument(url).promise.then(pdf => {
+                                        pdfDoc = pdf;
+                                        pdfViewerElement.style.display = 'block';
+                                        loadingElement.style.display = 'none';
+                                        pageNum = 1;
+                                        renderPage(pageNum);
+                                    }).catch(error => {
+                                        statusElement.innerHTML = `<div class="text-red-500">Error loading PDF: ${error.message}</div>`;
+                                        loadingElement.style.display = 'none';
+                                    });
+                                })
+                                .catch(error => {
+                                    statusElement.innerHTML = `<div class="text-red-500">Failed to fetch PDF: ${error.message}. Please check CORS settings or file access.</div>`;
+                                    loadingElement.style.display = 'none';
+                                });
                         });
                     } else {
-                        document.getElementById('status').innerHTML = '<div class="text-red-500">PDF not found</div>';
-                        document.getElementById('loading').style.display = 'none';
+                        statusElement.innerHTML = '<div class="text-red-500">PDF not found in database</div>';
+                        loadingElement.style.display = 'none';
                     }
                 })
                 .catch(error => {
-                    document.getElementById('status').innerHTML = `<div class="text-red-500">Error: ${error.message}</div>`;
-                    document.getElementById('loading').style.display = 'none';
+                    statusElement.innerHTML = `<div class="text-red-500">Database error: ${error.message}</div>`;
+                    loadingElement.style.display = 'none';
                 });
         }
 
@@ -167,7 +188,17 @@
             queueRenderPage(pageNum);
         });
 
-        loadPDF();
+        // Check authentication state
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                loadPDF();
+            } else {
+                statusElement.innerHTML = '<div class="text-red-500">Please log in to view the PDF</div>';
+                loadingElement.style.display = 'none';
+                // Redirect to index.html to trigger login modal
+                window.location.href = 'index.html';
+            }
+        });
     </script>
 </body>
 </html>
