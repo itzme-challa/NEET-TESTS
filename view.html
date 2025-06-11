@@ -7,50 +7,75 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
-        #pdfCanvas {
+        #pdfViewer {
+            max-height: calc(100vh - 120px);
+            overflow-y: auto;
+            scroll-snap-type: y mandatory;
+            scrollbar-width: none; /* Firefox */
+        }
+        #pdfViewer::-webkit-scrollbar {
+            display: none; /* Chrome, Safari */
+        }
+        .page-container {
+            scroll-snap-align: start;
+            margin-bottom: 1rem;
+        }
+        .page-canvas {
             width: 100%;
             border: 1px solid #e5e7eb;
             border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
-        .pdf-controls {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 1rem;
-            margin-bottom: 1rem;
+        #pageInfo {
+            position: fixed;
+            bottom: 1rem;
+            right: 1rem;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        #downloadSection {
+            display: none;
+            text-align: center;
         }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
-    <header class="bg-white shadow p-4">
+    <header class="bg-white shadow p-4 sticky top-0 z-10">
         <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold text-gray-800">PDF Viewer</h1>
-            <a href="index.html" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-                <i class="fas fa-arrow-left mr-2"></i>Back to Files
-            </a>
+            <h1 class="text-xl font-bold text-gray-800 flex items-center">
+                <i class="fas fa-file-pdf mr-2 text-red-500"></i> PDF Viewer
+            </h1>
+            <div class="flex items-center space-x-4">
+                <a id="downloadButton" href="#" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 hidden">
+                    <i class="fas fa-download mr-2"></i> Download
+                </a>
+                <a href="index.html" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
+                    <i class="fas fa-arrow-left mr-2"></i> Back to Files
+                </a>
+            </div>
         </div>
     </header>
     <main class="flex-grow container mx-auto p-4">
-        <div id="loading" class="flex justify-center">
-            <div class="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-600"></div>
+        <div id="loading" class="flex justify-center items-center h-64">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
         </div>
-        <div id="pdfViewer" class="bg-white rounded-lg shadow p-4 hidden">
-            <div class="pdf-controls">
-                <button id="prevPage" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400" disabled>
-                    <i class="fas fa-chevron-left"></i> Previous
-                </button>
-                <span id="pageInfo" class="text-gray-700 font-medium">Page 1 of 1</span>
-                <button id="nextPage" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:bg-gray-400" disabled>
-                    Next <i class="fas fa-chevron-right"></i>
-                </button>
-            </div>
-            <canvas id="pdfCanvas" class="mx-auto"></canvas>
+        <div id="pdfViewer" class="bg-white rounded-lg shadow-lg p-4 hidden"></div>
+        <div id="downloadSection" class="bg-white rounded-lg shadow-lg p-6">
+            <h2 class="text-lg font-semibold text-gray-800 mb-4">Unable to Load PDF</h2>
+            <p class="text-gray-600 mb-4">The PDF could not be loaded. You can download it instead.</p>
+            <a id="downloadLink" href="#" class="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 inline-flex items-center">
+                <i class="fas fa-download mr-2"></i> Download PDF
+            </a>
         </div>
         <div id="status" class="text-center mt-4"></div>
+        <div id="pageInfo" class="hidden"></div>
     </main>
 
     <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-database.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
     <script>
@@ -66,70 +91,76 @@
         };
 
         firebase.initializeApp(firebaseConfig);
-        const auth = firebase.auth();
         const database = firebase.database();
         let pdfDoc = null;
-        let pageNum = 1;
-        let pageRendering = false;
-        let pageNumPending = null;
-
-        const canvas = document.getElementById('pdfCanvas');
-        const ctx = canvas.getContext('2d');
-        const prevPageBtn = document.getElementById('prevPage');
-        const nextPageBtn = document.getElementById('nextPage');
+        let pdfUrl = '';
+        const scale = 1.5;
+        const pdfViewer = document.getElementById('pdfViewer');
+        const downloadSection = document.getElementById('downloadSection');
+        const downloadButton = document.getElementById('downloadButton');
+        const downloadLink = document.getElementById('downloadLink');
         const pageInfo = document.getElementById('pageInfo');
-        const statusElement = document.getElementById('status');
-        const loadingElement = document.getElementById('loading');
-        const pdfViewerElement = document.getElementById('pdfViewer');
+        const status = document.getElementById('status');
+        const loading = document.getElementById('loading');
 
         function getQueryParam(param) {
             const urlParams = new URLSearchParams(window.location.search);
             return urlParams.get(param);
         }
 
-        function renderPage(num) {
-            pageRendering = true;
-            pdfDoc.getPage(num).then(page => {
-                const viewport = page.getViewport({ scale: 1.5 });
-                canvas.height = viewport.height;
-                canvas.width = viewport.width;
+        function renderPages() {
+            pdfViewer.innerHTML = '';
+            for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                const pageContainer = document.createElement('div');
+                pageContainer.className = 'page-container';
+                const canvas = document.createElement('canvas');
+                canvas.className = 'page-canvas';
+                pageContainer.appendChild(canvas);
+                pdfViewer.appendChild(pageContainer);
 
-                const renderContext = {
-                    canvasContext: ctx,
-                    viewport: viewport
-                };
-                const renderTask = page.render(renderContext);
+                pdfDoc.getPage(pageNum).then(page => {
+                    const viewport = page.getViewport({ scale });
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
 
-                renderTask.promise.then(() => {
-                    pageRendering = false;
-                    if (pageNumPending !== null) {
-                        renderPage(pageNumPending);
-                        pageNumPending = null;
-                    }
+                    const renderContext = {
+                        canvasContext: canvas.getContext('2d'),
+                        viewport: viewport
+                    };
+                    page.render(renderContext);
+                }).catch(error => {
+                    console.error(`Error rendering page ${pageNum}:`, error);
                 });
-
-                pageInfo.textContent = `Page ${num} of ${pdfDoc.numPages}`;
-                prevPageBtn.disabled = num <= 1;
-                nextPageBtn.disabled = num >= pdfDoc.numPages;
-            }).catch(error => {
-                statusElement.innerHTML = `<div class="text-red-500">Error rendering page: ${error.message}</div>`;
-                loadingElement.style.display = 'none';
-            });
+            }
         }
 
-        function queueRenderPage(num) {
-            if (pageRendering) {
-                pageNumPending = num;
-            } else {
-                renderPage(num);
-            }
+        function updatePageInfo() {
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const pageContainer = entry.target;
+                        const pageNum = Array.from(pdfViewer.children).indexOf(pageContainer) + 1;
+                        pageInfo.textContent = `${pageNum} / ${pdfDoc.numPages}`;
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            Array.from(pdfViewer.children).forEach(child => observer.observe(child));
+        }
+
+        function showDownloadOption(url) {
+            downloadSection.style.display = 'block';
+            downloadLink.href = url;
+            pdfViewer.style.display = 'none';
+            pageInfo.style.display = 'none';
+            loading.style.display = 'none';
         }
 
         function loadPDF() {
             const pdfId = getQueryParam('pdfid');
             if (!pdfId) {
-                statusElement.innerHTML = '<div class="text-red-500">No PDF ID provided</div>';
-                loadingElement.style.display = 'none';
+                status.innerHTML = '<div class="text-red-500">No PDF ID provided</div>';
+                loading.style.display = 'none';
                 return;
             }
 
@@ -138,67 +169,36 @@
                     if (snapshot.exists()) {
                         snapshot.forEach(childSnapshot => {
                             const fileData = childSnapshot.val();
-                            // Enable worker for PDF.js to handle large files better
-                            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.worker.min.js';
-                            
-                            // Attempt to fetch PDF with CORS workaround
-                            fetch(fileData.url, { method: 'GET', mode: 'cors' })
-                                .then(response => {
-                                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                                    return response.blob();
-                                })
-                                .then(blob => {
-                                    const url = URL.createObjectURL(blob);
-                                    pdfjsLib.getDocument(url).promise.then(pdf => {
-                                        pdfDoc = pdf;
-                                        pdfViewerElement.style.display = 'block';
-                                        loadingElement.style.display = 'none';
-                                        pageNum = 1;
-                                        renderPage(pageNum);
-                                    }).catch(error => {
-                                        statusElement.innerHTML = `<div class="text-red-500">Error loading PDF: ${error.message}</div>`;
-                                        loadingElement.style.display = 'none';
-                                    });
-                                })
-                                .catch(error => {
-                                    statusElement.innerHTML = `<div class="text-red-500">Failed to fetch PDF: ${error.message}. Please check CORS settings or file access.</div>`;
-                                    loadingElement.style.display = 'none';
-                                });
+                            pdfUrl = fileData.url;
+                            downloadButton.href = pdfUrl;
+                            downloadButton.classList.remove('hidden');
+
+                            pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
+                                pdfDoc = pdf;
+                                pdfViewer.style.display = 'block';
+                                downloadSection.style.display = 'none';
+                                pageInfo.style.display = 'block';
+                                loading.style.display = 'none';
+                                renderPages();
+                                updatePageInfo();
+                            }).catch(error => {
+                                console.error('Error loading PDF:', error);
+                                status.innerHTML = '<div class="text-red-500">Failed to load PDF</div>';
+                                showDownloadOption(pdfUrl);
+                            });
                         });
                     } else {
-                        statusElement.innerHTML = '<div class="text-red-500">PDF not found in database</div>';
-                        loadingElement.style.display = 'none';
+                        status.innerHTML = '<div class="text-red-500">PDF not found</div>';
+                        loading.style.display = 'none';
                     }
                 })
                 .catch(error => {
-                    statusElement.innerHTML = `<div class="text-red-500">Database error: ${error.message}</div>`;
-                    loadingElement.style.display = 'none';
+                    status.innerHTML = `<div class="text-red-500">Error: ${error.message}</div>`;
+                    loading.style.display = 'none';
                 });
         }
 
-        prevPageBtn.addEventListener('click', () => {
-            if (pageNum <= 1) return;
-            pageNum--;
-            queueRenderPage(pageNum);
-        });
-
-        nextPageBtn.addEventListener('click', () => {
-            if (pageNum >= pdfDoc.numPages) return;
-            pageNum++;
-            queueRenderPage(pageNum);
-        });
-
-        // Check authentication state
-        auth.onAuthStateChanged(user => {
-            if (user) {
-                loadPDF();
-            } else {
-                statusElement.innerHTML = '<div class="text-red-500">Please log in to view the PDF</div>';
-                loadingElement.style.display = 'none';
-                // Redirect to index.html to trigger login modal
-                window.location.href = 'index.html';
-            }
-        });
+        loadPDF();
     </script>
 </body>
 </html>
