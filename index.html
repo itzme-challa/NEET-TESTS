@@ -3,66 +3,252 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Redirect Page</title>
-    <style>
-        body {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-family: Arial, sans-serif;
-            background-color: #f0f0f0;
-        }
-        .message {
-            text-align: center;
-            font-size: 18px;
-            color: #333;
-        }
-    </style>
+    <title>Test Series Viewer</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 </head>
-<body>
-    <div class="message" id="message">
-        Redirecting...
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+    <div class="container mx-auto bg-white rounded-xl shadow-xl p-8 max-w-4xl w-full">
+        <div class="flex items-center justify-between mb-6">
+            <h1 class="text-2xl font-bold text-gray-800 flex items-center">
+                <i class="fas fa-folder-open mr-2"></i> Test Series Free
+            </h1>
+            <div class="flex space-x-2">
+                <input type="text" id="searchInput" placeholder="Search files..." 
+                       class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" 
+                        onclick="displayFiles()">Refresh</button>
+                <button class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700" 
+                        onclick="logout()">Logout</button>
+            </div>
+        </div>
+        <div id="loading" class="hidden flex justify-center">
+            <div class="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-600"></div>
+        </div>
+        <div id="fileList" class="max-h-[70vh] overflow-y-auto"></div>
+        <div id="status" class="mt-4 text-center"></div>
     </div>
+
+    <!-- Login Modal -->
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+        <div class="bg-white p-6 rounded-lg w-96">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Login</h2>
+                <span class="cursor-pointer text-red-500 text-xl" onclick="closeModal('loginModal')">&times;</span>
+            </div>
+            <input type="email" id="loginEmail" placeholder="Email" 
+                   class="w-full p-2 mb-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="password" id="loginPassword" placeholder="Password" 
+                   class="w-full p-2 mb-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div id="loginStatus" class="text-center mb-3"></div>
+            <div class="flex justify-between">
+                <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" 
+                        onclick="login()">Login</button>
+                <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" 
+                        onclick="openModal('signupModal'); closeModal('loginModal')">Signup</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signupModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
+        <div class="bg-white p-6 rounded-lg w-96">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">Signup</h2>
+                <span class="cursor-pointer text-red-500 text-xl" onclick="closeModal('signupModal')">&times;</span>
+            </div>
+            <input type="email" id="signupEmail" placeholder="Email" 
+                   class="w-full p-2 mb-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <input type="password" id="signupPassword" placeholder="Password" 
+                   class="w-full p-2 mb-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <div id="signupStatus" class="text-center mb-3"></div>
+            <div class="flex justify-between">
+                <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" 
+                        onclick="signup()">Signup</button>
+                <button class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700" 
+                        onclick="closeModal('signupModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-database.js"></script>
     <script>
-        (function() {
-            const visitKey = 'lastVisit';
-            const visitURL = 'https://neet-tests.pages.dev/tests';
-            const currentTime = new Date().getTime();
-            const fiveHoursInMillis = 5 * 60 * 60 * 1000;
+        const firebaseConfig = {
+            apiKey: "AIzaSyAolcB_o6f1CQPbLSYrMKTYaz_xYs54khY",
+            authDomain: "quizapp-1ae20.firebaseapp.com",
+            databaseURL: "https://quizapp-1ae20-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "quizapp-1ae20",
+            storageBucket: "quizapp-1ae20.appspot.com",
+            messagingSenderId: "626886802317",
+            appId: "1:626886802317:web:df08c307697ca235c45bc4",
+            measurementId: "G-NKJTC5C1XW"
+        };
 
-            const lastVisit = localStorage.getItem(visitKey);
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
+        const auth = firebase.auth();
+        let openFolder = null;
 
-            if (lastVisit && (currentTime - lastVisit < fiveHoursInMillis)) {
-                // User has visited within the last 5 hours
-                window.location.href = visitURL;
-            } else {
-                // User has not visited or it's been more than 5 hours
-                localStorage.setItem(visitKey, currentTime);
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
 
-                // Get current month and year for alias
-                const currentDate = new Date();
-                const month = currentDate.toLocaleString('default', { month: 'long' });
-                const year = currentDate.getFullYear();
-                const alias = `${month}${year}`;
-                const fallbackURL = `https://adrinolinks.in/api?api=5a2539904639474b5f3da41f528199204eb76f65&url=${encodeURIComponent(visitURL)}&alias=${alias}`;
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
 
-                // Fetch the shortened URL
-                fetch(fallbackURL)
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.status === "success") {
-                            window.location.href = data.shortenedUrl;
+        function login() {
+            const email = document.getElementById('loginEmail').value;
+            const password = document.getElementById('loginPassword').value;
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    closeModal('loginModal');
+                    displayFiles();
+                })
+                .catch(error => {
+                    document.getElementById('loginStatus').innerHTML = `<div class="text-red-500">${error.message}</div>`;
+                });
+        }
+
+        function signup() {
+            const email = document.getElementById('signupEmail').value;
+            const password = document.getElementById('signupPassword').value;
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(() => {
+                    closeModal('signupModal');
+                    displayFiles();
+                })
+                .catch(error => {
+                    document.getElementById('signupStatus').innerHTML = `<div class="text-red-500">${error.message}</div>`;
+                });
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                document.getElementById('fileList').innerHTML = '';
+                document.getElementById('status').innerHTML = '<div class="text-green-500">Logged out successfully.</div>';
+                openModal('loginModal');
+            }).catch(error => {
+                document.getElementById('status').innerHTML = `<div class="text-red-500">${error.message}</div>`;
+            });
+        }
+
+        function generateRandomId() {
+            return Math.random().toString(36).substr(2, 9);
+        }
+
+        function displayFiles() {
+            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('fileList').innerHTML = '';
+
+            database.ref('files').once('value').then(snapshot => {
+                const folders = {};
+                snapshot.forEach(childSnapshot => {
+                    const fileData = childSnapshot.val();
+                    const { folder, subfolder, name, pdfId, date } = fileData;
+                    const formattedDate = new Date(date).toLocaleDateString();
+
+                    if (!folders[folder]) folders[folder] = {};
+                    if (subfolder) {
+                        if (!folders[folder][subfolder]) folders[folder][subfolder] = [];
+                        folders[folder][subfolder].push({ name, pdfId, date: formattedDate });
+                    } else {
+                        if (!folders[folder]['_files']) folders[folder]['_files'] = [];
+                        folders[folder]['_files'].push({ name, pdfId, date: formattedDate });
+                    }
+                });
+
+                const folderList = document.createElement('ul');
+                folderList.className = 'space-y-2';
+                Object.keys(folders).forEach(folder => {
+                    const folderItem = document.createElement('li');
+                    folderItem.className = 'bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-gray-100';
+                    folderItem.innerHTML = `<div class="flex items-center"><i class="fas fa-folder text-yellow-500 mr-2"></i>${folder}</div>`;
+                    folderList.appendChild(folderItem);
+
+                    const collapsibleContent = document.createElement('div');
+                    collapsibleContent.className = 'collapsible-content hidden pl-6 space-y-2 mt-2';
+
+                    Object.keys(folders[folder]).forEach(subfolder => {
+                        if (subfolder === '_files') {
+                            folders[folder][subfolder].forEach(file => {
+                                const fileItem = document.createElement('div');
+                                fileItem.className = 'flex justify-between items-center bg-white p-2 rounded hover:bg-blue-50';
+                                fileItem.innerHTML = `
+                                    <a href="view.html?pdfid=${file.pdfId}" class="text-blue-600 flex items-center">
+                                        <i class="fas fa-file-pdf mr-2"></i>${file.name}
+                                    </a>
+                                    <span class="text-gray-500 text-sm">${file.date}</span>`;
+                                collapsibleContent.appendChild(fileItem);
+                            });
                         } else {
-                            document.getElementById('message').textContent = 'Error occurred. Please try again later.';
+                            const subfolderItem = document.createElement('div');
+                            subfolderItem.className = 'bg-gray-100 rounded p-2';
+                            subfolderItem.innerHTML = `<div class="flex items-center"><i class="fas fa-folder-open text-blue-500 mr-2"></i>${subfolder}</div>`;
+                            collapsibleContent.appendChild(subfolderItem);
+
+                            folders[folder][subfolder].forEach(file => {
+                                const fileItem = document.createElement('div');
+                                fileItem.className = 'flex justify-between items-center bg-white p-2 rounded ml-4 mt-1 hover:bg-blue-50';
+                                fileItem.innerHTML = `
+                                    <a href="view.html?pdfid=${file.pdfId}" class="text-blue-600 flex items-center">
+                                        <i class="fas fa-file-pdf mr-2"></i>${file.name}
+                                    </a>
+                                    <span class="text-gray-500 text-sm">${file.date}</span>`;
+                                subfolderItem.appendChild(fileItem);
+                            });
                         }
-                    })
-                    .catch(error => {
-                        console.error('Error fetching the URL:', error);
-                        document.getElementById('message').textContent = 'Error occurred. Please check your connection.';
                     });
+
+                    folderItem.appendChild(collapsibleContent);
+                    folderItem.addEventListener('click', (e) => {
+                        if (e.target.tagName === 'A') return;
+                        if (openFolder && openFolder !== folderItem) {
+                            openFolder.querySelector('.collapsible-content').classList.add('hidden');
+                        }
+                        const content = folderItem.querySelector('.collapsible-content');
+                        content.classList.toggle('hidden');
+                        openFolder = content.classList.contains('hidden') ? null : folderItem;
+                    });
+                });
+
+                document.getElementById('fileList').appendChild(folderList);
+                document.getElementById('loading').style.display = 'none';
+            }).catch(error => {
+                document.getElementById('fileList').innerHTML = `<div class="text-red-500">Error loading files: ${error.message}</div>`;
+                document.getElementById('loading').style.display = 'none';
+            });
+        }
+
+        document.getElementById('searchInput').addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            const folderItems = document.querySelectorAll('.folder-item');
+            const fileItems = document.querySelectorAll('.file-item a');
+
+            folderItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.style.display = text.includes(query) ? 'block' : 'none';
+                const collapsibleContent = item.querySelector('.collapsible-content');
+                if (collapsibleContent) {
+                    collapsibleContent.style.display = text.includes(query) ? 'block' : 'none';
+                }
+            });
+
+            fileItems.forEach(item => {
+                const text = item.textContent.toLowerCase();
+                item.parentElement.style.display = text.includes(query) ? 'block' : 'none';
+            });
+        });
+
+        firebase.auth().onAuthStateChanged(user => {
+            if (user) {
+                displayFiles();
+            } else {
+                openModal('loginModal');
             }
-        })();
+        });
     </script>
 </body>
 </html>
