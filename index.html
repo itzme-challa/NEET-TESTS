@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -6,66 +6,90 @@
     <title>Test Series Viewer</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .collapsible-content { transition: max-height 0.3s ease-out; }
+        .folder-item:hover { transform: translateY(-2px); transition: transform 0.2s; }
+        .file-item:hover { transform: translateX(4px); transition: transform 0.2s; }
+        .modal { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .skeleton { background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+    </style>
 </head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="container mx-auto bg-white rounded-xl shadow-xl p-8 max-w-4xl w-full">
-        <div class="flex items-center justify-between mb-6">
-            <h1 class="text-2xl font-bold text-gray-800 flex items-center">
-                <i class="fas fa-folder-open mr-2"></i> Test Series Free
+<body class="bg-gray-50 min-h-screen flex items-center justify-center font-sans">
+    <div class="container mx-auto bg-white rounded-2xl shadow-2xl p-6 max-w-5xl w-full m-4">
+        <div class="flex flex-col sm:flex-row items-center justify-between mb-6">
+            <h1 class="text-3xl font-semibold text-gray-800 flex items-center mb-4 sm:mb-0">
+                <i class="fas fa-folder-open mr-3 text-yellow-500"></i> Test Series Free
             </h1>
-            <div class="flex space-x-2">
-                <input type="text" id="searchInput" placeholder="Search files..." 
-                       class="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700" 
-                        onclick="displayFiles()">Refresh</button>
-                <button class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700" 
-                        onclick="logout()">Logout</button>
+            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3 w-full sm:w-auto">
+                <div class="relative w-full sm:w-64">
+                    <input type="text" id="searchInput" placeholder="Search files..." 
+                           class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-100"
+                           aria-label="Search files">
+                    <i class="fas fa-search absolute right-3 top-3 text-gray-400"></i>
+                </div>
+                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200" 
+                        onclick="displayFiles()" title="Refresh file list">
+                    <i class="fas fa-sync-alt mr-2"></i>Refresh
+                </button>
+                <button class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition duration-200" 
+                        onclick="logout()" title="Log out">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                </button>
             </div>
         </div>
-        <div id="loading" class="hidden flex justify-center">
-            <div class="animate-spin rounded-full h-10 w-10 border-t-4 border-blue-600"></div>
+        <div id="loading" class="hidden flex justify-center py-6">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
         </div>
-        <div id="fileList" class="max-h-[70vh] overflow-y-auto"></div>
-        <div id="status" class="mt-4 text-center"></div>
+        <div id="fileList" class="max-h-[70vh] overflow-y-auto pr-2"></div>
+        <div id="status" class="mt-4 text-center text-gray-600"></div>
     </div>
 
     <!-- Login Modal -->
-    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
-        <div class="bg-white p-6 rounded-lg w-96">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold">Login</h2>
-                <span class="cursor-pointer text-red-500 text-xl" onclick="closeModal('loginModal')">&times;</span>
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center">
+        <div class="bg-white p-8 rounded-2xl w-full max-w-md modal">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold text-gray-800">Login</h2>
+                <button class="text-red-500 text-2xl" onclick="closeModal('loginModal')" aria-label="Close login modal">×</button>
             </div>
             <input type="email" id="loginEmail" placeholder="Email" 
-                   class="w-full p-2 mb-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="w-full p-3 mb-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+                   aria-label="Email">
             <input type="password" id="loginPassword" placeholder="Password" 
-                   class="w-full p-2 mb-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <div id="loginStatus" class="text-center mb-3"></div>
+                   class="w-full p-3 mb-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+                   aria-label="Password">
+            <div id="loginStatus" class="text-center mb-4"></div>
             <div class="flex justify-between">
-                <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700" 
+                <button class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition duration-200" 
                         onclick="login()">Login</button>
-                <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" 
+                <button class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-200" 
                         onclick="openModal('signupModal'); closeModal('loginModal')">Signup</button>
             </div>
         </div>
     </div>
 
     <!-- Signup Modal -->
-    <div id="signupModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center">
-        <div class="bg-white p-6 rounded-lg w-96">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold">Signup</h2>
-                <span class="cursor-pointer text-red-500 text-xl" onclick="closeModal('signupModal')">&times;</span>
+    <div id="signupModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center">
+        <div class="bg-white p-8 rounded-2xl w-full max-w-md modal">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-semibold text-gray-800">Signup</h2>
+                <button class="text-red-500 text-2xl" onclick="closeModal('signupModal')" aria-label="Close signup modal">×</button>
             </div>
             <input type="email" id="signupEmail" placeholder="Email" 
-                   class="w-full p-2 mb-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
+                   class="w-full p-3 mb-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+                   aria-label="Email">
             <input type="password" id="signupPassword" placeholder="Password" 
-                   class="w-full p-2 mb-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500">
-            <div id="signupStatus" class="text-center mb-3"></div>
+                   class="w-full p-3 mb-4 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+                   aria-label="Password">
+            <div id="signupStatus" class="text-center mb-4"></div>
             <div class="flex justify-between">
-                <button class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700" 
+                <button class="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 transition duration-200" 
                         onclick="signup()">Signup</button>
-                <button class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700" 
+                <button class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition duration-200" 
                         onclick="closeModal('signupModal')">Cancel</button>
             </div>
         </div>
@@ -92,11 +116,13 @@
         let openFolder = null;
 
         function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
+            document _
+
+.getElementById(modalId).classList.add('hidden');
         }
 
         function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'flex';
+            document.getElementById(modalId).classList.remove('hidden');
         }
 
         function login() {
@@ -108,7 +134,7 @@
                     displayFiles();
                 })
                 .catch(error => {
-                    document.getElementById('loginStatus').innerHTML = `<div class="text-red-500">${error.message}</div>`;
+                    document.getElementById('loginStatus').innerHTML = `<div class="text-red-500 text-sm">${error.message}</div>`;
                 });
         }
 
@@ -121,7 +147,7 @@
                     displayFiles();
                 })
                 .catch(error => {
-                    document.getElementById('signupStatus').innerHTML = `<div class="text-red-500">${error.message}</div>`;
+                    document.getElementById('signupStatus').innerHTML = `<div class="text-red-500 text-sm">${error.message}</div>`;
                 });
         }
 
@@ -139,9 +165,20 @@
             return Math.random().toString(36).substr(2, 9);
         }
 
+        function displaySkeleton() {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const skeletonItem = document.createElement('div');
+                skeletonItem.className = 'skeleton h-12 rounded-lg mb-2';
+                fileList.appendChild(skeletonItem);
+            }
+        }
+
         function displayFiles() {
-            document.getElementById('loading').style.display = 'flex';
+            document.getElementById('loading').classList.remove('hidden');
             document.getElementById('fileList').innerHTML = '';
+            displaySkeleton();
 
             database.ref('files').once('value').then(snapshot => {
                 const folders = {};
@@ -161,40 +198,41 @@
                 });
 
                 const folderList = document.createElement('ul');
-                folderList.className = 'space-y-2';
+                folderList.className = 'space-y-3';
                 Object.keys(folders).forEach(folder => {
                     const folderItem = document.createElement('li');
-                    folderItem.className = 'bg-gray-50 rounded-lg p-3 cursor-pointer hover:bg-gray-100';
-                    folderItem.innerHTML = `<div class="flex items-center"><i class="fas fa-folder text-yellow-500 mr-2"></i>${folder}</div>`;
+                    folderItem.className = 'folder-item bg-gray-100 rounded-lg p-4 cursor-pointer hover:bg-gray-200 transition duration-200';
+                    folderItem.innerHTML = `<div class="flex items-center"><i class="fas fa-folder text-yellow-500 mr-3"></i><span class="font-medium">${folder}</span></div>`;
                     folderList.appendChild(folderItem);
 
                     const collapsibleContent = document.createElement('div');
-                    collapsibleContent.className = 'collapsible-content hidden pl-6 space-y-2 mt-2';
+                    collapsibleContent.className = 'collapsible-content hidden pl-6 space-y-2 mt-3';
+                    collapsibleContent.style.maxHeight = '0px';
 
                     Object.keys(folders[folder]).forEach(subfolder => {
                         if (subfolder === '_files') {
                             folders[folder][subfolder].forEach(file => {
                                 const fileItem = document.createElement('div');
-                                fileItem.className = 'flex justify-between items-center bg-white p-2 rounded hover:bg-blue-50';
+                                fileItem.className = 'file-item flex justify-between items-center bg-white p-3 rounded-lg hover:bg-blue-50 transition duration-200';
                                 fileItem.innerHTML = `
-                                    <a href="view.html?pdfid=${file.pdfId}" class="text-blue-600 flex items-center">
-                                        <i class="fas fa-file-pdf mr-2"></i>${file.name}
+                                    <a href="view.html?pdfid=${file.pdfId}" class="text-blue-600 flex items-center hover:underline">
+                                        <i class="fas fa-file-pdf mr-2 text-red-500"></i>${file.name}
                                     </a>
                                     <span class="text-gray-500 text-sm">${file.date}</span>`;
                                 collapsibleContent.appendChild(fileItem);
                             });
                         } else {
                             const subfolderItem = document.createElement('div');
-                            subfolderItem.className = 'bg-gray-100 rounded p-2';
-                            subfolderItem.innerHTML = `<div class="flex items-center"><i class="fas fa-folder-open text-blue-500 mr-2"></i>${subfolder}</div>`;
+                            subfolderItem.className = 'bg-gray-50 rounded-lg p-3';
+                            subfolderItem.innerHTML = `<div class="flex items-center"><i class="fas fa-folder-open text-blue-500 mr-2"></i><span class="font-medium">${subfolder}</span></div>`;
                             collapsibleContent.appendChild(subfolderItem);
 
                             folders[folder][subfolder].forEach(file => {
                                 const fileItem = document.createElement('div');
-                                fileItem.className = 'flex justify-between items-center bg-white p-2 rounded ml-4 mt-1 hover:bg-blue-50';
+                                fileItem.className = 'file-item flex justify-between items-center bg-white p-2 rounded-lg ml-4 mt-2 hover:bg-blue-50 transition duration-200';
                                 fileItem.innerHTML = `
-                                    <a href="view.html?pdfid=${file.pdfId}" class="text-blue-600 flex items-center">
-                                        <i class="fas fa-file-pdf mr-2"></i>${file.name}
+                                    <a href="view.html?pdfid=${file.pdfId}" class="text-blue-600 flex items-center hover:underline">
+                                        <i class="fas fa-file-pdf mr-2 text-red-500"></i>${file.name}
                                     </a>
                                     <span class="text-gray-500 text-sm">${file.date}</span>`;
                                 subfolderItem.appendChild(fileItem);
@@ -207,39 +245,47 @@
                         if (e.target.tagName === 'A') return;
                         if (openFolder && openFolder !== folderItem) {
                             openFolder.querySelector('.collapsible-content').classList.add('hidden');
+                            openFolder.querySelector('.collapsible-content').style.maxHeight = '0px';
                         }
                         const content = folderItem.querySelector('.collapsible-content');
                         content.classList.toggle('hidden');
+                        content.style.maxHeight = content.classList.contains('hidden') ? '0px' : `${content.scrollHeight}px`;
                         openFolder = content.classList.contains('hidden') ? null : folderItem;
                     });
                 });
 
+                document.getElementById('fileList').innerHTML = '';
                 document.getElementById('fileList').appendChild(folderList);
-                document.getElementById('loading').style.display = 'none';
+                document.getElementById('loading').classList.add('hidden');
             }).catch(error => {
-                document.getElementById('fileList').innerHTML = `<div class="text-red-500">Error loading files: ${error.message}</div>`;
-                document.getElementById('loading').style.display = 'none';
+                document.getElementById('fileList').innerHTML = `<div class="text-red-500 text-center">Error loading files: ${error.message}</div>`;
+                document.getElementById('loading').classList.add('hidden');
             });
         }
 
+        let searchTimeout;
         document.getElementById('searchInput').addEventListener('input', function() {
-            const query = this.value.toLowerCase();
-            const folderItems = document.querySelectorAll('.folder-item');
-            const fileItems = document.querySelectorAll('.file-item a');
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const query = this.value.toLowerCase();
+                const folderItems = document.querySelectorAll('.folder-item');
+                const fileItems = document.querySelectorAll('.file-item a');
 
-            folderItems.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                item.style.display = text.includes(query) ? 'block' : 'none';
-                const collapsibleContent = item.querySelector('.collapsible-content');
-                if (collapsibleContent) {
-                    collapsibleContent.style.display = text.includes(query) ? 'block' : 'none';
-                }
-            });
+                folderItems.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    item.style.display = text.includes(query) ? 'block' : 'none';
+                    const collapsibleContent = item.querySelector('.collapsible-content');
+                    if (collapsibleContent) {
+                        collapsibleContent.style.display = text.includes(query) ? 'block' : 'none';
+                        collapsibleContent.style.maxHeight = text.includes(query) ? `${collapsibleContent.scrollHeight}px` : '0px';
+                    }
+                });
 
-            fileItems.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                item.parentElement.style.display = text.includes(query) ? 'block' : 'none';
-            });
+                fileItems.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    item.parentElement.style.display = text.includes(query) ? 'block' : 'none';
+                });
+            }, 300);
         });
 
         firebase.auth().onAuthStateChanged(user => {
