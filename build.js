@@ -4,6 +4,25 @@ const dotenv = require('dotenv');
 // Load environment variables from .env file
 dotenv.config();
 
+// Validate required environment variables
+const requiredEnvVars = [
+    'FIREBASE_API_KEY',
+    'FIREBASE_AUTH_DOMAIN',
+    'FIREBASE_DATABASE_URL',
+    'FIREBASE_PROJECT_ID',
+    'FIREBASE_STORAGE_BUCKET',
+    'FIREBASE_MESSAGING_SENDER_ID',
+    'FIREBASE_APP_ID',
+    'FIREBASE_MEASUREMENT_ID'
+];
+
+for (const envVar of requiredEnvVars) {
+    if (!process.env[envVar]) {
+        console.error(`Error: Missing required environment variable ${envVar}`);
+        process.exit(1);
+    }
+}
+
 // Firebase configuration template
 const firebaseConfigTemplate = {
     apiKey: process.env.FIREBASE_API_KEY,
