@@ -91,8 +91,8 @@
         }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <div class="container mx-auto max-w-6xl py-4 px-2">
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <div class="container mx-auto max-w-6xl py-4 px-2 flex-grow">
         <!-- Header -->
         <div class="bg-white rounded-xl shadow-md p-4 mb-4">
             <div class="header-container">
@@ -106,6 +106,10 @@
                                class="w-full px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                     </div>
+                    <a href="https://razorpay.me/@eduhub-kmr" target="_blank"
+                       class="bg-yellow-600 text-white px-3 py-1 rounded-lg flex items-center auth-btn">
+                        <i class="fas fa-donate mr-1"></i> Support
+                    </a>
                     <button id="userBtn" class="bg-blue-600 text-white px-3 py-1 rounded-lg flex items-center auth-btn">
                         <i class="fas fa-user mr-1"></i> <span id="userText">Login</span>
                     </button>
@@ -157,6 +161,15 @@
         <!-- Status Message -->
         <div id="status" class="mt-4 text-center"></div>
     </div>
+
+    <!-- Footer -->
+    <footer class="bg-white shadow p-4 mt-4">
+        <div class="container mx-auto text-center text-gray-600">
+            Eduhub-KMR... support us for a small amount of money via
+            <a href="https://razorpay.me/@eduhub-kmr" target="_blank" class="text-blue-600 hover:underline">Razorpay</a> or
+            <a href="https://payments.cashfree.com/forms?code=eduhub-kmr" target="_blank" class="text-blue-600 hover:underline">Cashfree</a>
+        </div>
+    </footer>
 
     <!-- Login Modal -->
     <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
@@ -244,15 +257,16 @@
     <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-auth.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-database.js"></script>
     <script>
+        // Placeholder for Firebase config (replaced during build)
         const firebaseConfig = {
-            apiKey: "AIzaSyAolcB_o6f1CQPbLSYrMKTYaz_xYs54khY",
-            authDomain: "quizapp-1ae20.firebaseapp.com",
-            databaseURL: "https://quizapp-1ae20-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "quizapp-1ae20",
-            storageBucket: "quizapp-1ae20.appspot.com",
-            messagingSenderId: "626886802317",
-            appId: "1:626886802317:web:df08c307697ca235c45bc4",
-            measurementId: "G-NKJTC5C1XW"
+            apiKey: "FIREBASE_API_KEY",
+            authDomain: "FIREBASE_AUTH_DOMAIN",
+            databaseURL: "FIREBASE_DATABASE_URL",
+            projectId: "FIREBASE_PROJECT_ID",
+            storageBucket: "FIREBASE_STORAGE_BUCKET",
+            messagingSenderId: "FIREBASE_MESSAGING_SENDER_ID",
+            appId: "FIREBASE_APP_ID",
+            measurementId: "FIREBASE_MEASUREMENT_ID"
         };
 
         firebase.initializeApp(firebaseConfig);
@@ -375,157 +389,154 @@
             breadcrumb.classList.remove('hidden');
         }
 
-function navigateTo(path) {
-    currentPath = path;
-    // Encode each part of the path to handle spaces and special characters
-    const pathStr = path.map(encodeURIComponent).join('/');
-    window.history.pushState({ path }, '', `#${pathStr}`);
-    displayCurrentPath();
-    renderBreadcrumbs();
-}
-
-function displayCurrentPath() {
-    fileList.classList.add('hidden');
-    loading.classList.remove('hidden');
-    emptyState.classList.add('hidden');
-    loginRequired.classList.add('hidden');
-    fileList.innerHTML = '';
-
-    let current = folderData;
-    // Use decoded path for internal logic
-    currentPath.forEach(folder => {
-        current = current[folder] || {};
-    });
-
-    if (Object.keys(current).length === 0) {
-        loading.classList.add('hidden');
-        emptyState.classList.remove('hidden');
-        return;
-    }
-
-    const section = document.createElement('div');
-    section.className = 'section px-4 py-2';
-
-    // Subfolders
-    Object.keys(current).forEach(key => {
-        if (key === '_files') return;
-        const subfolderItem = document.createElement('div');
-        subfolderItem.className = 'folder-toggle flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg cursor-pointer mb-2';
-        subfolderItem.innerHTML = `
-            <div class="flex items-center">
-                <i class="fas fa-folder text-yellow-500 mr-3 text-lg"></i>
-                <span class="font-medium text-gray-800">${key}</span>
-            </div>
-            <i class="fas fa-chevron-right text-gray-500"></i>
-        `;
-        subfolderItem.addEventListener('click', () => {
-            navigateTo([...currentPath, key]);
-        });
-        section.appendChild(subfolderItem);
-    });
-
-    // Files
-    if (current['_files']) {
-        current['_files'].forEach(file => {
-            const fileItem = document.createElement('div');
-            fileItem.className = 'file-item flex justify-between items-center py-3 px-4 rounded-lg cursor-pointer mb-2';
-            fileItem.innerHTML = `
-                <div class="flex items-center">
-                    <i class="fas fa-file-pdf text-red-500 mr-3 text-lg"></i>
-                    <div>
-                        <div class="font-medium text-gray-800">${file.name}</div>
-                        <div class="text-xs text-gray-500">Added ${file.date}</div>
-                    </div>
-                </div>
-                <a href="view.html?pdfid=${file.pdfId}" class="text-blue-600 hover:text-blue-800 px-3 py-1 rounded">
-                    <i class="fas fa-external-link-alt"></i>
-                </a>
-            `;
-            section.appendChild(fileItem);
-        });
-    }
-
-    fileList.appendChild(section);
-    loading.classList.add('hidden');
-    fileList.classList.remove('hidden');
-
-    // Search functionality
-    searchInput.addEventListener('input', function() {
-        const query = this.value.toLowerCase();
-        const items = section.querySelectorAll('.file-item, .folder-toggle');
-        let hasVisibleItems = false;
-        items.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            if (text.includes(query)) {
-                item.classList.remove('hidden');
-                hasVisibleItems = true;
-            } else {
-                item.classList.add('hidden');
-            }
-        });
-        section.style.display = hasVisibleItems || query === '' ? 'block' : 'none';
-    });
-}
-
-function loadFiles() {
-    fileList.classList.add('hidden');
-    loading.classList.remove('hidden');
-    emptyState.classList.add('hidden');
-    loginRequired.classList.add('hidden');
-    folderData = {};
-
-    database.ref('files').once('value').then(snapshot => {
-        if (!snapshot.exists()) {
-            loading.classList.add('hidden');
-            emptyState.classList.remove('hidden');
-            return;
+        function navigateTo(path) {
+            currentPath = path;
+            const pathStr = path.map(encodeURIComponent).join('/');
+            window.history.pushState({ path }, '', `#${pathStr}`);
+            displayCurrentPath();
+            renderBreadcrumbs();
         }
 
-        snapshot.forEach(childSnapshot => {
-            const fileData = childSnapshot.val();
-            const { folder, subfolder, name, pdfId, date } = fileData;
-            const formattedDate = new Date(date).toLocaleDateString('en-US', {
-                year: 'numeric', month: 'short', day: 'numeric'
+        function displayCurrentPath() {
+            fileList.classList.add('hidden');
+            loading.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            loginRequired.classList.add('hidden');
+            fileList.innerHTML = '';
+
+            let current = folderData;
+            currentPath.forEach(folder => {
+                current = current[folder] || {};
             });
 
-            if (!folderData[folder]) folderData[folder] = {};
-            if (subfolder) {
-                const subfolderPath = subfolder.split('/'); // Support nested subfolders
-                let current = folderData[folder];
-                subfolderPath.forEach((sf, index) => {
-                    if (!current[sf]) current[sf] = {};
-                    if (index === subfolderPath.length - 1) {
-                        if (!current[sf]['_files']) current[sf]['_files'] = [];
-                        current[sf]['_files'].push({ name, pdfId, date: formattedDate });
-                    }
-                    current = current[sf];
-                });
-            } else {
-                if (!folderData[folder]['_files']) folderData[folder]['_files'] = [];
-                folderData[folder]['_files'].push({ name, pdfId, date: formattedDate });
+            if (Object.keys(current).length === 0) {
+                loading.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
             }
+
+            const section = document.createElement('div');
+            section.className = 'section px-4 py-2';
+
+            // Subfolders
+            Object.keys(current).forEach(key => {
+                if (key === '_files') return;
+                const subfolderItem = document.createElement('div');
+                subfolderItem.className = 'folder-toggle flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg cursor-pointer mb-2';
+                subfolderItem.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-folder text-yellow-500 mr-3 text-lg"></i>
+                        <span class="font-medium text-gray-800">${key}</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-500"></i>
+                `;
+                subfolderItem.addEventListener('click', () => {
+                    navigateTo([...currentPath, key]);
+                });
+                section.appendChild(subfolderItem);
+            });
+
+            // Files
+            if (current['_files']) {
+                current['_files'].forEach(file => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item flex justify-between items-center py-3 px-4 rounded-lg cursor-pointer mb-2';
+                    fileItem.innerHTML = `
+                        <div class="flex items-center">
+                            <i class="fas fa-file-pdf text-red-500 mr-3 text-lg"></i>
+                            <div>
+                                <div class="font-medium text-gray-800">${file.name}</div>
+                                <div class="text-xs text-gray-500">Added ${file.date}</div>
+                            </div>
+                        </div>
+                        <a href="view.html?pdfid=${file.pdfId}" class="text-blue-600 hover:text-blue-800 px-3 py-1 rounded">
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
+                    `;
+                    section.appendChild(fileItem);
+                });
+            }
+
+            fileList.appendChild(section);
+            loading.classList.add('hidden');
+            fileList.classList.remove('hidden');
+
+            // Search functionality
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase();
+                const items = section.querySelectorAll('.file-item, .folder-toggle');
+                let hasVisibleItems = false;
+                items.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    if (text.includes(query)) {
+                        item.classList.remove('hidden');
+                        hasVisibleItems = true;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+                section.style.display = hasVisibleItems || query === '' ? 'block' : 'none';
+            });
+        }
+
+        function loadFiles() {
+            fileList.classList.add('hidden');
+            loading.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            loginRequired.classList.add('hidden');
+            folderData = {};
+
+            database.ref('files').once('value').then(snapshot => {
+                if (!snapshot.exists()) {
+                    loading.classList.add('hidden');
+                    emptyState.classList.remove('hidden');
+                    return;
+                }
+
+                snapshot.forEach(childSnapshot => {
+                    const fileData = childSnapshot.val();
+                    const { folder, subfolder, name, pdfId, date } = fileData;
+                    const formattedDate = new Date(date).toLocaleDateString('en-US', {
+                        year: 'numeric', month: 'short', day: 'numeric'
+                    });
+
+                    if (!folderData[folder]) folderData[folder] = {};
+                    if (subfolder) {
+                        const subfolderPath = subfolder.split('/'); // Support nested subfolders
+                        let current = folderData[folder];
+                        subfolderPath.forEach((sf, index) => {
+                            if (!current[sf]) current[sf] = {};
+                            if (index === subfolderPath.length - 1) {
+                                if (!current[sf]['_files']) current[sf]['_files'] = [];
+                                current[sf]['_files'].push({ name, pdfId, date: formattedDate });
+                            }
+                            current = current[sf];
+                        });
+                    } else {
+                        if (!folderData[folder]['_files']) folderData[folder]['_files'] = [];
+                        folderData[folder]['_files'].push({ name, pdfId, date: formattedDate });
+                    }
+                });
+
+                // Handle URL hash for initial navigation
+                const hash = window.location.hash.replace('#', '').split('/').filter(Boolean);
+                const decodedHash = hash.map(decodeURIComponent);
+                navigateTo(decodedHash);
+            }).catch(error => {
+                loading.classList.add('hidden');
+                document.getElementById('status').innerHTML = `
+                    <div class="text-red-500 p-3 bg-red-50 rounded">Error loading files: ${error.message}</div>
+                `;
+            });
+        }
+
+        // Handle back/forward navigation
+        window.addEventListener('popstate', (event) => {
+            const path = event.state ? event.state.path : [];
+            currentPath = path;
+            displayCurrentPath();
+            renderBreadcrumbs();
         });
-
-        // Handle URL hash for initial navigation
-        const hash = window.location.hash.replace('#', '').split('/').filter(Boolean);
-        // Decode each part of the hash to handle encoded spaces
-        const decodedHash = hash.map(decodeURIComponent);
-        navigateTo(decodedHash);
-    }).catch(error => {
-        loading.classList.add('hidden');
-        document.getElementById('status').innerHTML = `
-            <div class="text-red-500 p-3 bg-red-50 rounded">Error loading files: ${error.message}</div>
-        `;
-    });
-}
-
-// Handle back/forward navigation
-window.addEventListener('popstate', (event) => {
-    const path = event.state ? event.state.path : [];
-    currentPath = path;
-    displayCurrentPath();
-    renderBreadcrumbs();
-});
 
         // Initialize auth state listener
         firebase.auth().onAuthStateChanged(user => {
