@@ -1,4 +1,13 @@
-const firebaseConfig = window.firebaseConfig; // Loaded from HTML script tag
+const firebaseConfig = {
+    apiKey: "AIzaSyAolcB_o6f1CQPbLSYrMKTYaz_xYs54khY",
+    authDomain: "quizapp-1ae20.firebaseapp.com",
+    databaseURL: "https://quizapp-1ae20-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "quizapp-1ae20",
+    storageBucket: "quizapp-1ae20.appspot.com",
+    messagingSenderId: "626886802317",
+    appId: "1:626886802317:web:df08c307697ca235c45bc4",
+    measurementId: "G-NKJTC5C1XW"
+};
 
 firebase.initializeApp(firebaseConfig);
 const database = firebase.database();
@@ -15,41 +24,27 @@ const userBtn = document.getElementById('userBtn');
 const userText = document.getElementById('userText');
 
 function closeModal(modalId) {
-    console.log(`Closing modal: ${modalId}`);
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.add('hidden');
-    }
+    document.getElementById(modalId).classList.add('hidden');
 }
 
 function openModal(modalId) {
-    console.log(`Opening modal: ${modalId}`);
-    const modal = document.getElementById(modalId);
-    if (modal) {
-        modal.classList.remove('hidden');
-    } else {
-        console.error(`Modal with ID ${modalId} not found`);
-    }
+    document.getElementById(modalId).classList.remove('hidden');
 }
 
 function signInWithGoogle() {
-    console.log('Initiating Google sign-in');
     auth.signInWithPopup(provider)
         .then(() => {
-            console.log('Google sign-in successful');
             closeModal('loginModal');
             closeModal('signupModal');
             displayFiles();
         })
         .catch(error => {
-            console.error('Google sign-in error:', error);
             const statusElement = document.getElementById('loginStatus') || document.getElementById('signupStatus');
             statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
         });
 }
 
 function login() {
-    console.log('Initiating email login');
     const email = document.getElementById('loginEmail').value;
     const password = document.getElementById('loginPassword').value;
     const statusElement = document.getElementById('loginStatus');
@@ -58,18 +53,15 @@ function login() {
     
     auth.signInWithEmailAndPassword(email, password)
         .then(() => {
-            console.log('Email login successful');
             closeModal('loginModal');
             displayFiles();
         })
         .catch(error => {
-            console.error('Email login error:', error);
             statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
         });
 }
 
 function signup() {
-    console.log('Initiating signup');
     const email = document.getElementById('signupEmail').value;
     const password = document.getElementById('signupPassword').value;
     const statusElement = document.getElementById('signupStatus');
@@ -78,31 +70,25 @@ function signup() {
     
     auth.createUserWithEmailAndPassword(email, password)
         .then(() => {
-            console.log('Signup successful');
             closeModal('signupModal');
             displayFiles();
         })
         .catch(error => {
-            console.error('Signup error:', error);
             statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
         });
 }
 
 function logout() {
-    console.log('Initiating logout');
     auth.signOut().then(() => {
-        console.log('Logout successful');
-        showLoginRequired();
-        document.getElementById('status').innerHTML = '<div class="text-green-500 p-3 bg-green-50 rounded">Logged out successfully.</div>';
+        showLogin();
+        document.getElementById('status').innerHTML = '<div class="text-green-600 p-3 bg-green-50 rounded">Logged out successfully.</div>';
         setTimeout(() => document.getElementById('status').innerHTML = '', 3000);
     }).catch(error => {
-        console.error('Logout error:', error);
         document.getElementById('status').innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">${error.message}</div>`;
     });
 }
 
-function showLoginRequired() {
-    console.log('Showing login required state');
+function showLogin() {
     fileList.classList.add('hidden');
     loading.classList.add('hidden');
     emptyState.classList.add('hidden');
@@ -111,7 +97,6 @@ function showLoginRequired() {
 }
 
 function displayFiles() {
-    console.log('Displaying files');
     fileList.classList.add('hidden');
     loading.classList.remove('hidden');
     emptyState.classList.add('hidden');
@@ -120,7 +105,6 @@ function displayFiles() {
 
     database.ref('files').once('value').then(snapshot => {
         if (!snapshot.exists()) {
-            console.log('No files found');
             loading.classList.add('hidden');
             emptyState.classList.remove('hidden');
             return;
@@ -255,18 +239,17 @@ function displayFiles() {
         });
         
     }).catch(error => {
-        console.error('Error loading files:', error);
         loading.classList.add('hidden');
         document.getElementById('status').innerHTML = `
             <div class="text-red-500 p-3 bg-red-50 rounded">
                 Error loading files: ${error.message}
-            </div>`;
+            </div>
+        `;
     });
 }
 
 // Initialize auth state listener
-auth.onAuthStateChanged(user => {
-    console.log('Auth state changed:', user ? 'Logged in' : 'Logged out');
+firebase.auth().onAuthStateChanged(user => {
     if (user) {
         userText.textContent = 'Logout';
         userBtn.onclick = logout;
@@ -275,22 +258,13 @@ auth.onAuthStateChanged(user => {
     } else {
         showLoginRequired();
         userText.textContent = 'Login';
-        userBtn.onclick = () => {
-            console.log('Login button clicked');
-            openModal('loginModal');
-        };
+        userBtn.onclick = () => openModal('loginModal');
         userBtn.className = userBtn.className.replace('bg-gray-600', 'bg-blue-600');
     }
 });
 
-// Ensure userBtn click works
-if (userBtn) {
-    userBtn.addEventListener('click', () => {
-        console.log('User button clicked');
-        if (!auth.currentUser) {
-            openModal('loginModal');
-        }
-    });
-} else {
-    console.error('userBtn element not found');
-}
+// Open login modal if not authenticated when clicking user button
+userBtn.addEventListener('click', function(e) {
+    if (auth.currentUser) return;
+    openModal('loginModal');
+});
