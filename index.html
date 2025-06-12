@@ -103,7 +103,9 @@
                 <div class="flex items-center gap-2">
                     <div class="search-container">
                         <input type="text" id="searchInput" placeholder="Search test series..."
-                               class="w-full px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                               class="w-full px-3 py-1 border rounded-lg focus
+
+:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                     </div>
                     <a href="https://razorpay.me/@eduhub-kmr" target="_blank"
@@ -172,7 +174,7 @@
     </footer>
 
     <!-- Login Modal -->
-    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
+    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p.4 z-50">
         <div class="bg-white rounded-xl shadow-md p-6 w-full max-w-md">
             <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-gray-800">Welcome Back</h2>
@@ -197,7 +199,7 @@
                 </button>
                 <div class="flex items-center my-4">
                     <div class="flex-1 border-t border-gray-200"></div>
-                    <span class="px-3 text-gray-500">or</span>
+                    <span class="px脸色: 3 text-gray-500">or</span>
                     <div class="flex-1 border-t border-gray-200"></div>
                 </div>
                 <button onclick="signInWithGoogle()" class="w-full bg-red-600 text-white p-3 rounded-lg auth-btn flex items-center justify-center">
@@ -247,7 +249,7 @@
                 <div class="text-center text-sm text-gray-600 mt-4">
                     Already have an account?
                     <button onclick="openModal('loginModal'); closeModal('signupModal')"
-                            class="text-blue-600 hover:text-blue-800 font-medium">Login</button>
+                            class="text-blue-600 hover:text-blue работает:800 font-medium">Login</button>
                 </div>
             </div>
         </div>
@@ -461,7 +463,8 @@
             fileList.classList.remove('hidden');
 
             // Search functionality
-            searchInput.addEventListener('input', function() {
+            searchInput.value = ''; // Reset search input
+            searchInput.oninput = function() {
                 const query = this.value.toLowerCase();
                 const items = section.querySelectorAll('.file-item, .folder-toggle');
                 let hasVisibleItems = false;
@@ -475,7 +478,7 @@
                     }
                 });
                 section.style.display = hasVisibleItems || query === '' ? 'block' : 'none';
-            });
+            };
         }
 
         function loadFiles() {
