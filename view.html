@@ -141,13 +141,15 @@
             pageInfo.style.display = 'none';
         }
 
-        function loadPDF() {
-            const pdfId = getQueryParam('pdfid');
+        function loadPDF(pdfId) {
             if (!pdfId) {
                 status.textContent = 'No PDF ID provided';
                 loading.style.display = 'none';
                 return;
             }
+
+            // Update browser history with the current PDF
+            window.history.pushState({ pdfId }, '', `view.html?pdfid=${pdfId}`);
 
             database.ref('files').orderByChild('pdfId').equalTo(pdfId).once('value')
                 .then(snapshot => {
@@ -166,7 +168,7 @@
                             }).catch(error => {
                                 console.error('Error loading PDF:', error);
                                 status.textContent = 'Failed to load PDF';
-                                showDownloadOption(pdfUrl);
+                                showDownloadOption pdfUrl);
                             });
                         });
                     } else {
@@ -180,7 +182,21 @@
                 });
         }
 
-        loadPDF();
+        // Handle back/forward navigation
+        window.addEventListener('popstate', (event) => {
+            const state = event.state;
+            if (state && state.pdfId) {
+                // Reload the PDF if navigating within view.html
+                loadPDF(state.pdfId);
+            } else {
+                // Navigate back to index.html if no PDF ID in state
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Initial PDF load
+        const initialPdfId = getQueryParam('pdfid');
+        loadPDF(initialPdfId);
     </script>
 </body>
 </html>
