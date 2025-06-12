@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Test Series Viewer</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <style>
         .folder-toggle i.fa-chevron-right {
             transition: transform 0.3s ease;
@@ -31,7 +31,7 @@
         }
         .auth-btn:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .header-container {
             display: flex;
@@ -110,11 +110,11 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="search-container">
-                        <input type="text" id="searchInput" placeholder="Search test series..." 
+                        <input type="text" id="indexSearchInput" placeholder="Search test series..." 
                                class="w-full px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                     </div>
-                    <button id="userBtn" class="bg-blue-600 text-white px-3 py-1 rounded-lg flex items-center justify-center auth-btn">
+                    <button id="userBtn" class="bg-blue-600 text-white px-3 py-1 rounded-lg flex items-center justify-center bg-blue-600 auth-btn">
                         <i class="fas fa-user mr-1"></i> <span id="userText">Login</span>
                     </button>
                 </div>
@@ -122,18 +122,18 @@
         </div>
 
         <!-- Main Content -->
-        <div id="content" class="bg-white rounded-xl shadow-md">
+        <div class="bg-white rounded-xl shadow-md" id="content">
             <!-- Loading State -->
-            <div id="loading" class="hidden flex justify-center items-center py-16">
+            <div id="loading" class="hidden flex items-center justify-center py-16">
                 <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
             </div>
 
             <!-- Empty State -->
-            <div id="emptyState" class="hidden text-center py-16 px-4">
+            <div id="emptyState" class="hidden px-4 py-16 text-center">
                 <i class="fas fa-folder-open text-gray-300 text-5xl mb-4"></i>
-                <h3 class="text-xl font-medium text-gray-700 mb-2">No test series available</h3>
-                <p class="text-gray-500 mb-4">Please login to access the test series or contact support</p>
-                <button onclick="openModal('loginModal')" class="bg-blue-600 text-white px-6 py-2 rounded-lg auth-btn">
+                <h3 class="mb-2 text-xl font-medium text-gray-700">No test series available</h3>
+                <p class="mb-4 text-gray-500">Please login to access the test series or contact support</p>
+                <button onclick="openModal('loginModal')" class="px-6 py-2 text-white bg-blue-600 rounded-lg auth-btn">
                     Login Now
                 </button>
             </div>
@@ -142,15 +142,15 @@
             <div id="fileList" class="hidden divide-y divide-gray-200"></div>
 
             <!-- Login Required -->
-            <div id="loginRequired" class="hidden text-center py-16 px-4">
+            <div id="loginRequired" class="hidden px-4 py-16 text-center">
                 <i class="fas fa-lock text-gray-300 text-5xl mb-4"></i>
-                <h3 class="text-xl font-medium text-gray-700 mb-2">Login Required</h3>
-                <p class="text-gray-500 mb-4">Please login to access the test series</p>
+                <h3 class="mb-2 text-xl font-medium text-gray-700">Login Required</h3>
+                <p class="mb-4 text-gray-500">Please login to access the test series</p>
                 <div class="flex justify-center space-x-3">
-                    <button onclick="openModal('loginModal')" class="bg-blue-600 text-white px-6 py-2 rounded-lg auth-btn">
+                    <button onclick="openModal('loginModal')" class="px-6 py-2 text-white bg-blue-600 rounded-lg auth-btn">
                         Login
                     </button>
-                    <button onclick="openModal('signupModal')" class="bg-green-600 text-white px-6 py-2 rounded-lg auth-btn">
+                    <button onclick="openModal('signupModal')" class="px-6 py-2 text-white bg-green-600 rounded-lg auth-btn">
                         Sign Up
                     </button>
                 </div>
@@ -162,9 +162,9 @@
     </div>
 
     <!-- Login Modal -->
-    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-md p-6 w-full max-w-md">
-            <div class="flex justify-between items-center mb-6">
+    <div id="loginModal" class="fixed inset-0 z-50 items-center justify-center hidden p-4 bg-black bg-opacity-50">
+        <div class="w-full max-w-md p-6 bg-white rounded-xl shadow-md">
+            <div class="flex items-center justify-between mb-6">
                 <h2 class="text-2xl font-bold text-gray-800">Welcome Back</h2>
                 <button onclick="closeModal('loginModal')" class="text-gray-500 hover:text-gray-700">
                     <i class="fas fa-times text-xl"></i>
@@ -173,20 +173,20 @@
             
             <div class="space-y-4">
                 <div>
-                    <label for="loginEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <label for="loginEmail" class="block mb-1 text-sm font-medium text-gray-700">Email</label>
                     <input type="email" id="loginEmail" placeholder="your@email.com" 
-                           class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                           class="w-full p-3 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 
                 <div>
-                    <label for="loginPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <label for="loginPassword" class="block mb-1 text-sm font-medium text-gray-700">Password</label>
                     <input type="password" id="loginPassword" placeholder="••••••••" 
-                           class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                           class="w-full p-3 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 
-                <div id="loginStatus" class="text-center py-2"></div>
+                <div id="loginStatus" class="py-2 text-center"></div>
                 
-                <button onclick="login()" class="w-full bg-blue-600 text-white p-3 rounded-lg auth-btn">
+                <button onclick="login()" class="w-full p-3 text-white bg-blue-600 rounded-lg auth-btn">
                     Login
                 </button>
                 
@@ -196,13 +196,13 @@
                     <div class="flex-1 border-t border-gray-200"></div>
                 </div>
                 
-                <button onclick="signInWithGoogle()" class="w-full bg-red-600 text-white p-3 rounded-lg auth-btn flex items-center justify-center">
+                <button onclick="signInWithGoogle()" class="flex items-center justify-center w-full p-3 text-white bg-red-600 rounded-lg auth-btn">
                     <i class="fab fa-google mr-3"></i> Continue with Google
                 </button>
                 
-                <div class="text-center text-sm text-gray-600 mt-4">
+                <div class="mt-4 text-sm text-center text-gray-600">
                     Don't have an account? 
-                    <button onclick="openModal('signupModal'); closeModal('loginModal')" class="text-blue-600 hover:text-blue-800 font-medium">
+                    <button onclick="openModal('signupModal'); closeModal('loginModal')" class="font-medium text-blue-600 hover:text-blue-800">
                         Sign up
                     </button>
                 </div>
@@ -211,9 +211,9 @@
     </div>
 
     <!-- Signup Modal -->
-    <div id="signupModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center p-4 z-50">
-        <div class="bg-white rounded-xl shadow-md p-6 w-full max-w-md">
-            <div class="flex justify-between items-center mb-6">
+    <div id="signupModal" class="fixed inset-0 z-50 items-center justify-center hidden p-4 bg-black bg-opacity-50">
+        <div class="w-full max-w-md p-6 bg-white rounded-xl shadow-md">
+            <div class="flex items-center justify-between mb-6">
                 <h2 class="text-2xl font-bold text-gray-800">Create Account</h2>
                 <button onclick="closeModal('signupModal')" class="text-gray-500 hover:text-gray-700">
                     <i class="fas fa-times text-xl"></i>
@@ -222,20 +222,20 @@
             
             <div class="space-y-4">
                 <div>
-                    <label for="signupEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <label for="signupEmail" class="block mb-1 text-sm font-medium text-gray-700">Email</label>
                     <input type="email" id="signupEmail" placeholder="your@email.com" 
-                           class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                           class="w-full p-3 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 
                 <div>
-                    <label for="signupPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <label for="signupPassword" class="block mb-1 text-sm font-medium text-gray-700">Password</label>
                     <input type="password" id="signupPassword" placeholder="••••••••" 
-                           class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                           class="w-full p-3 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 </div>
                 
-                <div id="signupStatus" class="text-center py-2"></div>
+                <div id="signupStatus" class="py-2 text-center"></div>
                 
-                <button onclick="signup()" class="w-full bg-green-600 text-white p-3 rounded-lg auth-btn">
+                <button onclick="signup()" class="w-full p-3 text-white bg-green-600 rounded-lg auth-btn">
                     Create Account
                 </button>
                 
@@ -245,13 +245,13 @@
                     <div class="flex-1 border-t border-gray-200"></div>
                 </div>
                 
-                <button onclick="signInWithGoogle()" class="w-full bg-red-600 text-white p-3 rounded-lg auth-btn flex items-center justify-center">
+                <button onclick="signInWithGoogle()" class="flex items-center justify-center w-full p-3 text-white bg-red-600 rounded-lg auth-btn">
                     <i class="fab fa-google mr-3"></i> Continue with Google
                 </button>
                 
-                <div class="text-center text-sm text-gray-600 mt-4">
+                <div class="mt-4 text-sm text-center text-gray-600">
                     Already have an account? 
-                    <button onclick="openModal('loginModal'); closeModal('signupModal')" class="text-blue-600 hover:text-blue-800 font-medium">
+                    <button onclick="openModal('loginModal'); closeModal('signupModal')" class="font-medium text-blue-600 hover:text-blue-800">
                         Login
                     </button>
                 </div>
@@ -259,25 +259,18 @@
         </div>
     </div>
 
-    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-database.js"></script>
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyAolcB_o6f1CQPbLSYrMKTYaz_xYs54khY",
-            authDomain: "quizapp-1ae20.firebaseapp.com",
-            databaseURL: "https://quizapp-1ae20-default-rtdb.asia-southeast1.firebasedatabase.app",
-            projectId: "quizapp-1ae20",
-            storageBucket: "quizapp-1ae20.appspot.com",
-            messagingSenderId: "626886802317",
-            appId: "1:626886802317:web:df08c307697ca235c45bc4",
-            measurementId: "G-NKJTC5C1XW"
-        };
+    <script src="/config.js"></script>
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
+        import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
+        import { getDatabase, ref, onValue, query, orderByChild, equalTo } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+        import { getStorage } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
 
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        const auth = firebase.auth();
-        const provider = new firebase.auth.GoogleAuthProvider();
+        const app = initializeApp(firebaseConfig);
+        const database = getDatabase(app);
+        const auth = getAuth(app);
+        const storage = getStorage(app);
+        const provider = new GoogleAuthProvider();
         
         // UI Elements
         const content = document.getElementById('content');
@@ -296,61 +289,59 @@
             document.getElementById(modalId).classList.remove('hidden');
         }
 
-        function signInWithGoogle() {
-            auth.signInWithPopup(provider)
-                .then(() => {
-                    closeModal('loginModal');
-                    closeModal('signupModal');
-                    displayFiles();
-                })
-                .catch(error => {
-                    const statusElement = document.getElementById('loginStatus') || document.getElementById('signupStatus');
-                    statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
-                });
+        async function signInWithGoogle() {
+            try {
+                await signInWithPopup(auth, provider);
+                closeModal('loginModal');
+                closeModal('signupModal');
+                displayFiles();
+            } catch (error) {
+                const statusElement = document.getElementById('loginStatus') || document.getElementById('signupStatus');
+                statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
+            }
         }
 
-        function login() {
+        async function login() {
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             const statusElement = document.getElementById('loginStatus');
             
             statusElement.innerHTML = '<div class="text-blue-500 p-2 bg-blue-50 rounded">Logging in...</div>';
             
-            auth.signInWithEmailAndPassword(email, password)
-                .then(() => {
-                    closeModal('loginModal');
-                    displayFiles();
-                })
-                .catch(error => {
-                    statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
-                });
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                closeModal('loginModal');
+                displayFiles();
+            } catch (error) {
+                statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
+            }
         }
 
-        function signup() {
+        async function signup() {
             const email = document.getElementById('signupEmail').value;
             const password = document.getElementById('signupPassword').value;
             const statusElement = document.getElementById('signupStatus');
             
             statusElement.innerHTML = '<div class="text-blue-500 p-2 bg-blue-50 rounded">Creating account...</div>';
             
-            auth.createUserWithEmailAndPassword(email, password)
-                .then(() => {
-                    closeModal('signupModal');
-                    displayFiles();
-                })
-                .catch(error => {
-                    statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
-                });
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                closeModal('signupModal');
+                displayFiles();
+            } catch (error) {
+                statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
+            }
         }
 
-        function logout() {
-            auth.signOut().then(() => {
+        async function logout() {
+            try {
+                await signOut(auth);
                 showLoginRequired();
                 document.getElementById('status').innerHTML = '<div class="text-green-500 p-3 bg-green-50 rounded">Logged out successfully.</div>';
                 setTimeout(() => document.getElementById('status').innerHTML = '', 3000);
-            }).catch(error => {
+            } catch (error) {
                 document.getElementById('status').innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">${error.message}</div>`;
-            });
+            }
         }
 
         function showLoginRequired() {
@@ -368,7 +359,8 @@
             loginRequired.classList.add('hidden');
             fileList.innerHTML = '';
 
-            database.ref('files').once('value').then(snapshot => {
+            const filesRef = query(ref(database, 'files'));
+            onValue(filesRef, (snapshot) => {
                 if (!snapshot.exists()) {
                     loading.classList.add('hidden');
                     emptyState.classList.remove('hidden');
@@ -376,7 +368,7 @@
                 }
 
                 const folders = {};
-                snapshot.forEach(childSnapshot => {
+                snapshot.forEach((childSnapshot) => {
                     const fileData = childSnapshot.val();
                     const { folder, subfolder, name, pdfId, date } = fileData;
                     const formattedDate = new Date(date).toLocaleDateString('en-US', {
@@ -487,7 +479,7 @@
                 fileList.classList.remove('hidden');
                 
                 // Setup search functionality
-                document.getElementById('searchInput').addEventListener('input', function() {
+                document.getElementById('indexSearchInput').addEventListener('input', function() {
                     const query = this.value.toLowerCase();
                     const sections = document.querySelectorAll('.section');
                     
@@ -510,7 +502,7 @@
                     });
                 });
                 
-            }).catch(error => {
+            }, (error) => {
                 loading.classList.add('hidden');
                 document.getElementById('status').innerHTML = `
                     <div class="text-red-500 p-3 bg-red-50 rounded">
@@ -521,7 +513,7 @@
         }
 
         // Initialize auth state listener
-        firebase.auth().onAuthStateChanged(user => {
+        onAuthStateChanged(auth, user => {
             if (user) {
                 userText.textContent = 'Logout';
                 userBtn.onclick = logout;
