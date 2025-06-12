@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel File Upload</title>
+    <title>Admin File Upload</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link href="stylesheet" rel="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         .folder-toggle i.fa-chevron-right {
             transition: transform 0.3s ease;
@@ -13,46 +13,46 @@
         .folder-toggle.expanded i.fa-chevron-right {
             transform: rotate(90deg);
         }
-        .file-item-wrapper {
+        .file-item {
             transition: background-color 0.2s ease, transform 0.2s ease;
         }
-        .file-item-wrapper:hover {
+        .file-item:hover {
             background-color: #f8fafc;
             transform: translateX(2px);
         }
-        .auth-container {
-            transition: transform 0.2s ease;, box-shadow 0.2s ease;
+        .auth-btn {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .auth-container:hover {
+        .auth-btn:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .header-container {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 0.5rem;            width: 100%;
+            gap: 0.5rem;
+            width: 100%;
             flex-wrap: nowrap;
-            nowrap;
         }
         .search-container {
             position: relative;
             flex: 1;
             min-width: 120px;
             max-width: 250px;
-            width: 250px;
         }
         .title-container {
             flex-shrink: 0;
             display: flex;
             align-items: center;
         }
-        #search-inputs {
+        #search-input {
             width: 100%;
             padding-left: 2.25rem;
         }
         #user-btn {
-            flex-shrink: 0;
+            flex-shrink: #btn;
+            user-shrink: nowrap;
             white-space: nowrap;
         }
         @media (max-width: 640px) {
@@ -62,12 +62,12 @@
             .search-container {
                 max-width: 150px;
             }
-            #search-inputs {
+            #search-input {
                 font-size: 0.75rem;
-                padding: 0.25rem 1.75rem;
+                padding: 0.5rem 1.75rem;
             }
             #user-btn {
-                padding: 0.5rem;
+                padding: 0.5rem 0.75rem;
                 font-size: 0.75rem;
             }
             .title-container h1 {
@@ -78,13 +78,13 @@
             .search-container {
                 max-width: 100px;
             }
-            #search-inputs {
+            #search-input {
                 font-size: 0.7rem;
             }
             #user-btn {
                 padding: 0.4rem 0.6rem;
                 font-size: 0.7rem;
-            };
+            }
             .title-container h1 {
                 font-size: 1rem;
             }
@@ -96,7 +96,7 @@
             display: none;
             position: fixed;
             inset: 0;
-            background-color: rgba(0,0,0,0.5);
+            background-color: rgba(0, 0, 0, 0.5);
             align-items: center;
             justify-content: center;
             z-index: 50;
@@ -121,46 +121,46 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="search-container">
-                        <input type="text" id="search-inputs" placeholder="Search files..." 
-                       class="w-full px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                        <input type="text" id="search-input" placeholder="Search files..." 
+                               class="w-full px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                     </div>
-                    <button id="admin-btn" class="bg-blue-600 text-white px-3 py-1 rounded-lg flex items-center justify-center bg-blue-600 auth-btn">
-                        <i class="fas fa-user mr-1"></i>
-                        <span id="admin-text">Login</span>
+                    <button id="user-btn" class="bg-blue-600 text-white px-3 py-1 rounded-lg flex items-center justify-center auth-btn">
+                        <i class="fas fa-user mr-1"></i> <span id="user-text">Login</span>
                     </button>
                 </div>
             </div>
         </div>
 
         <!-- Main Content -->
-        <div class="bg-white rounded-xl shadow-md p-6">
+        <div class="bg-white rounded-xl shadow-md p-8">
             <div class="mb-4">
-                <label for="folder-name" class="block text-sm font-semibold text-gray-700">
+                <label for="folder-name" class="block text-sm font-medium text-gray-700">
                     <i class="fas fa-folder mr-1"></i> Institute Name:
                 </label>
                 <input type="text" id="folder-name" placeholder="Enter institute name..." 
                        class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
             </div>
             <div class="mb-4">
-                <label for="subfolder-name" class="block text-sm font-semibold text-gray-700">
-                    <i class="fas fa-folder-plus mr-1"></i> Test Name:
-                    </label>
+                <label for="sub-folder-name" class="block text-sm font-medium text-gray-700">
+                    <i class="fas fa-folder-plus mr-1"></i> Test Name (optional):
+                </label>
                 <input type="text" id="sub-folder-name" placeholder="Enter test name..." 
-                       class="w-full p-2 border rounded">
+                       class="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
             </div>
             <div class="mb-4">
-                <label for="file-input" class="block text-sm font-semibold text-gray-700">
+                <label for="file-input" class="block text-sm font-medium text-gray-700">
                     <i class="fas fa-file-upload mr-1"></i> Select Files:
                 </label>
-                <input type="file" id="file-input" multiple="multiple" accept="application/pdf,.pdf" 
-                multiple accept=".pdf" class="p-2 border rounded bg-white">
+                <input type="file" id="file-input" multiple accept=".pdf" 
+                       class="w-full p-2 border rounded bg-white">
             </div>
-            <button id="file-upload-button" class="w-full py-4 px-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled" disabled="disabled">
-                <i class="fas fa-cloud-upload"></i> Upload</button>
-            <div id="upload-status" class="mt-4"></div>
-            <div id="file-list" class="mt-6 max-h-64 overflow-y-auto">
-                <h2 class="mb-2 text-lg font-medium"><i class="fas fa-list mr-1"></i> All Files</h2>
+            <button id="upload-button" class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700 disabled:bg-gray-400 auth-btn" disabled>
+                <i class="fas fa-cloud-upload-alt"></i> Upload
+            </button>
+            <div id="status" class="mt-4"></div>
+            <div id="file-list" class="mt-6 max-h-96 overflow-y-auto">
+                <h2 class="text-lg font-medium mb-2"><i class="fas fa-list mr-1"></i> All Files</h2>
             </div>
         </div>
     </div>
@@ -168,7 +168,7 @@
     <!-- Login Modal -->
     <div id="login-modal" class="modal">
         <div class="modal-content">
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex justify-between items-center mb-6">
                 <h2 class="text-2xl font-bold text-gray-800">Welcome Back</h2>
                 <button onclick="closeModal('login-modal')" class="text-gray-500 hover:text-gray-700">
                     <i class="fas fa-times text-xl"></i>
@@ -176,17 +176,17 @@
             </div>
             <div class="space-y-4">
                 <div>
-                    <label for="login-email" class="block mb-1 text-sm font-medium text-gray-700">Email</label>
+                    <label for="login-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                     <input type="email" id="login-email" placeholder="your@email.com" 
-                           class="w-full p-3 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                           class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                 </div>
                 <div>
-                    <label for="login-password" class="block mb-1 text-sm font-medium text-gray-700">Password</label>
+                    <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                     <input type="password" id="login-password" placeholder="••••••••" 
-                           class="w-full p-3 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                           class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                 </div>
-                <div id="login-status" class="py-2 text-center"></div>
-                <button onclick="login()" class="w-full p-3 text-white bg-blue-600 rounded-lg hover:bg-blue-700 auth-btn">
+                <div id="login-status" class="text-center py-2"></div>
+                <button onclick="login()" class="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 auth-btn">
                     Login
                 </button>
                 <div class="flex items-center my-4">
@@ -194,12 +194,12 @@
                     <span class="px-3 text-gray-500">or</span>
                     <div class="flex-1 border-t border-gray-200"></div>
                 </div>
-                <button onclick="signInWithGoogle()" class="flex items-center w-full p-3 text-white bg-red-600 rounded-lg hover:bg-red-700 auth-btn">
+                <button onclick="signInWithGoogle()" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 auth-btn flex items-center justify-center">
                     <i class="fab fa-google mr-3"></i> Continue with Google
                 </button>
-                <div class="mt-4 text-sm text-center text-gray-600">
+                <div class="text-center text-sm text-gray-600 mt-4">
                     Don't have an account? 
-                    <button onclick="openModal('signup-modal'); closeModal('login-modal')" class="font-medium text-blue-600 hover:text-blue-800">
+                    <button onclick="openModal('signup-modal'); closeModal('login-modal')" class="text-blue-600 hover:text-blue-800 font-medium">
                         Sign up
                     </button>
                 </div>
@@ -210,40 +210,38 @@
     <!-- Signup Modal -->
     <div id="signup-modal" class="modal">
         <div class="modal-content">
-            <div class="flex items-center justify-between mb-4">
-                <div>
-                    <h2 class="text-2xl font-bold text-gray-800">Create Account</h2>
-                    <button onclick="closeModal('signup-modal')" class="text-gray-500 hover:text-gray-700">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Create Account</h2>
+                <button onclick="closeModal('signup-modal')" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
             </div>
             <div class="space-y-4">
                 <div>
-                    <label for="signup-email" class="block mb-1 text-sm font-medium text-gray-700">Email</label>
+                    <label for="signup-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
                     <input type="email" id="signup-email" placeholder="your@email.com" 
-                           class="w-full p-3 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                           class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                 </div>
                 <div>
-                    <label for="signup-password" class="block mb-1 text-sm font-medium text-gray-700">Password</label>
+                    <label for="signup-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
                     <input type="password" id="signup-password" placeholder="••••••••" 
-                           class="w-full p-3 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                           class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                 </div>
-                <div id="signup-status" class="py-2 text-center"></div>
-                <button onclick="signup()" class="w-full p-3 bg-green-600 text-white rounded-lg hover:bg-green-700 auth-btn">
+                <div id="signup-status" class="text-center py-2"></div>
+                <button onclick="signup()" class="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 auth-btn">
                     Create Account
                 </button>
                 <div class="flex items-center my-4">
                     <div class="flex-1 border-t border-gray-200"></div>
                     <span class="px-3 text-gray-500">or</span>
-                    <div class="flex-1 border-t"></div>
+                    <div class="flex-1 border-t border-gray-200"></div>
                 </div>
-                <button onclick="signInWithGoogle()" class="flex items-center justify-center w-full p-3 text-white bg-red-600 rounded-lg hover:bg-red-700 auth-btn">
+                <button onclick="signInWithGoogle()" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 auth-btn flex items-center justify-center">
                     <i class="fab fa-google mr-3"></i> Continue with Google
                 </button>
-                <div class="mt-4 text-sm text-center text-gray-600">
-                    Already have account? 
-                    <button onclick="openModal('login-modal'); closeModal('signup-modal')" class="font-medium text-blue-600 hover:text-blue-800">
+                <div class="text-center text-sm text-gray-600 mt-4">
+                    Already have an account? 
+                    <button onclick="openModal('login-modal'); closeModal('signup-modal')" class="text-blue-600 hover:text-blue-800 font-medium">
                         Login
                     </button>
                 </div>
@@ -254,47 +252,56 @@
     <!-- Edit Modal -->
     <div id="edit-modal" class="modal">
         <div class="modal-content">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-gray-800">Edit File</h2>
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Edit File</h2>
                 <button onclick="closeModal('edit-modal')" class="text-gray-500 hover:text-gray-700">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
             <div class="space-y-4">
                 <div>
-                    <label for="edit-folder" class="block mb-1 text-sm font-medium text-gray-700">Institute Name</label>
+                    <label for="edit-folder" class="block text-sm font-medium text-gray-700 mb-1">Institute Name</label>
                     <input type="text" id="edit-folder" placeholder="Enter institute name..." 
-                           class="w-full p-3 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                           class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                 </div>
                 <div>
-                    <label for="edit-subfolder" class="block mb-1 text-sm font-medium text-gray-700">Test Name:</label>
+                    <label for="edit-subfolder" class="block text-sm font-medium text-gray-700 mb-1">Test Name (optional)</label>
                     <input type="text" id="edit-subfolder" placeholder="Enter test name..." 
-                           class="w-full p-3 bg-white border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                           class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                 </div>
-                <div id="edit-status" class="py-2 text-center"></div>
-                <button onclick="saveEdit()" class="w-full p-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 auth-btn">
+                <div id="edit-status" class="text-center py-2"></div>
+                <button onclick="saveEdit()" class="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 auth-btn">
                     Save Changes
                 </button>
             </div>
         </div>
     </div>
 
-    <script src="/config.js"></script>
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js';
-        import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
-        import { getDatabase, ref, push, onValue, update, remove } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAolcB_o6f1CQPbLSYrMKTYaz_xYs54khY",
+            authDomain: "quizapp-1ae20.firebaseapp.com",
+            databaseURL: "https://quizapp-1ae20-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "quizapp-1ae20",
+            storageBucket: "quizapp-1ae20.appspot.com",
+            messagingSenderId: "626886802317",
+            appId: "1:626886802317:web:df08c307697ca235c45bc4",
+            measurementId: "G-NKJTC5C1XW"
+        };
 
-        const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
-        const storage = getStorage(app);
-        const database = getDatabase(app);
-        const provider = new GoogleAuthProvider();
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const storage = firebase.storage();
+        const database = firebase.database();
+        const provider = new firebase.auth.GoogleAuthProvider();
 
-        const uploadButton = document.getElementById('file-upload-button');
-        const userBtn = document.getElementById('admin-btn');
-        const userText = document.getElementById('admin-text');
+        const uploadButton = document.getElementById('upload-button');
+        const userBtn = document.getElementById('user-btn');
+        const userText = document.getElementById('user-text');
         let currentEditKey = null;
 
         function closeModal(modalId) {
@@ -305,63 +312,64 @@
             document.getElementById(modalId).style.display = 'flex';
         }
 
-        async function signInWithGoogle() {
-            try {
-                await signInWithPopup(auth, provider);
-                closeModal('login-modal');
-                closeModal('signup-modal');
-                loadFileList();
-            } catch (error) {
-                const statusElement = document.getElementById('login-status') || document.getElementById('signup-status');
-                statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-blue-50">{error.message}</div>`;
-              }
-            </div>
+        function signInWithGoogle() {
+            auth.signInWithPopup(provider)
+                .then(() => {
+                    closeModal('login-modal');
+                    closeModal('signup-modal');
+                    loadFileList();
+                })
+                .catch(error => {
+                    const statusElement = document.getElementById('login-status') || document.getElementById('signup-status');
+                    statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
+                });
         }
 
-        async function login() {
-            const emailInput = document.getElementById('login-email').value;
-            const passwordInput = document.getElementById('login-password').value;
-            const statusInput = document.getElementById('login-status');
+        function login() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const statusElement = document.getElementById('login-status');
             
-            statusInput.innerHTML = '<div class="text-blue-500 p-2 bg-blue-50 rounded">Logging in...</div>';
+            statusElement.innerHTML = '<div class="text-blue-500 p-2 bg-blue-50 rounded">Logging in...</div>';
             
-            try {
-                await signInWithEmailAndPassword(auth, emailInput, passwordInput);
-                closeModal('login-modal');
-                loadFileList();
-            } catch (error) {
-                statusInput.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
-            }
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    closeModal('login-modal');
+                    loadFileList();
+                })
+                .catch(error => {
+                    statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
+                });
         }
 
-        async function signup() {
-            const emailInput = document.getElementById('signup-email').value;
-            const passwordInput = document.getElementById('signup-password').value;
-            const statusInput = document.getElementById('signup-status');
+        function signup() {
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const statusElement = document.getElementById('signup-status');
             
-            statusInput.innerHTML = '<div class="text-blue-500 p-2 bg-blue-50 rounded">Creating account...</div>';
+            statusElement.innerHTML = '<div class="text-blue-500 p-2 bg-blue-50 rounded">Creating account...</div>';
             
-            try {
-                await createUserWithEmailAndPassword(auth, emailInput, passwordInput);
-                closeModal('signup-modal');
-                loadFileList();
-            } catch (error) {
-                statusInput.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
-            }
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(() => {
+                    closeModal('signup-modal');
+                    loadFileList();
+                })
+                .catch(error => {
+                    statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
+                });
         }
 
-        async function logout() {
-            try {
-                await signOut(auth);
-                document.getElementById('upload-status').innerHTML = '<div class="text-green-500 p-3 bg-green-50 rounded-lg">Logged out successfully</div>';
-                setTimeout(() => document.getElementById('upload-status').innerHTML = '', 3600);
-            } catch (error) {
-                document.getElementById('upload-status').innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded-lg">${error.message}</div>`;
-            }
+        function logout() {
+            auth.signOut().then(() => {
+                document.getElementById('status').innerHTML = '<div class="text-green-500 p-3 bg-green-50 rounded">Logged out successfully.</div>';
+                setTimeout(() => document.getElementById('status').innerHTML = '', 3000);
+            }).catch(error => {
+                document.getElementById('status').innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">${error.message}</div>`;
+            });
         }
 
         function generateRandomId() {
-            return Math.random().toString(36).substring(2,9);
+            return Math.random().toString(36).substr(2, 9);
         }
 
         uploadButton.addEventListener('click', () => {
@@ -370,124 +378,127 @@
                 return;
             }
 
-            const folderNameInput = document.getElementById('folder-name').value.trim();
-            const subFolderNameInput = document.getElementById('sub-folder-name').value.trim();
+            const folderName = document.getElementById('folder-name').value.trim();
+            const subFolderName = document.getElementById('sub-folder-name').value.trim();
             const fileInput = document.getElementById('file-input');
             const files = fileInput.files;
 
             if (files.length === 0) {
-                document.getElementById('upload-status').innerHTML = '<div class="text-red-500 p-3 bg-red-50 rounded">No files selected</div>';
+                document.getElementById('status').innerHTML = '<div class="text-red-500 p-3 bg-red-50 rounded">No files selected</div>';
                 return;
             }
 
-            if (!folderNameInput) {
-                document.getElementById('upload-status').innerHTML = '<div class="text-red-500 p-3 bg-red-50 rounded">Institute name is required</div>';
+            if (!folderName) {
+                document.getElementById('status').innerHTML = '<div class="text-red-500 p-3 bg-red-50 rounded">Institute name is required</div>';
                 return;
             }
 
-            let path = folderNameInput;
-            if (subFolderNameInput) path += `/${subFolderNameInput}`;
+            let path = folderName;
+            if (subFolderName) path += `/${subFolderName}`;
 
-            const statusInput = document.getElementById('upload-status');
-            statusInput.innerHTML = '<div class="text-blue-600 p-3 bg-blue-50 rounded">Uploading...</div>';
+            const statusElement = document.getElementById('status');
+            statusElement.innerHTML = '<div class="text-blue-600 p-3 bg-blue-50 rounded">Uploading...</div>';
 
             Array.from(files).forEach(file => {
                 const pdfId = generateRandomId();
-                const storageRef = ref(storage, `${path}/${file.name}`);
-                const uploadTask = uploadBytesResumable(storageRef, file);
+                const storageRef = storage.ref(`${path}/${file.name}`);
+                const uploadTask = storageRef.put(file);
 
                 const progressContainer = document.createElement('div');
-                progressContainer.className = 'w-full bg-white rounded h-5 mt-2 relative';
+                progressContainer.className = 'w-full bg-gray-200 rounded h-5 mt-2 relative';
                 const progressBar = document.createElement('div');
                 progressBar.className = 'bg-blue-600 h-full rounded text-white text-xs leading-5 text-center';
                 const progressText = document.createElement('div');
+                progressText.className = 'absolute w-full text-center text-xs';
                 progressContainer.appendChild(progressBar);
                 progressContainer.appendChild(progressText);
-                statusInput.appendChild(progressContainer);
+                statusElement.appendChild(progressContainer);
 
                 uploadTask.on('state_changed', (snapshot) => {
                     const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
                     progressBar.style.width = progress + '%';
                     progressText.textContent = Math.round(progress) + '%';
                 }, (error) => {
-                    progressText.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">${error.message}</div>`;
+                    progressText.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">Error: ${error.message}</div>`;
                     progressBar.className = 'bg-red-600 h-full rounded';
-                }, async () => {
-                    try {
-                        const downloadUrl = await getDownloadURL(uploadTask.snapshot.ref);
+                }, () => {
+                    uploadTask.snapshot.ref.getDownloadURL().then((downloadURL) => {
                         const fileData = {
                             name: file.name,
-                            downloadURL: downloadUrl,
+                            url: downloadURL,
                             date: new Date().toISOString(),
-                            folderName: folderNameInput,
-                            subfolder: subFolderNameInput || '',
-                            userId: auth.currentUser.uid,
+                            folder: folderName,
+                            subfolder: subFolderName || '',
+                            uid: auth.currentUser.uid,
                             pdfId: pdfId
                         };
 
-                        await push(ref(database, 'files'), fileData);
-                        statusInput.innerHTML = '<div class="text-green-600 p-3 bg-green-50 rounded">Files uploaded successfully</div>';
-                        fileInput.value = '';
-                        document.getElementById('folder-name').value = '';
-                        document.getElementById('sub-folder-name').value = '';
-                        loadFileList();
-                    } catch (error) {
-                        statusInput.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">Error saving file data: ${error.message}</div>`;
-                    }
+                        database.ref('files').push(fileData, (error) => {
+                            if (error) {
+                                statusElement.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">Error saving file data: ${error.message}</div>`;
+                            } else {
+                                statusElement.innerHTML = '<div class="text-green-500 p-3 bg-green-50 rounded">Files uploaded successfully</div>';
+                                fileInput.value = '';
+                                document.getElementById('folder-name').value = '';
+                                document.getElementById('sub-folder-name').value = '';
+                                loadFileList();
+                            }
+                        });
+                    });
                 });
             });
         });
 
         function loadFileList() {
-            const fileList = document.getElementById('file-list');
-            fileList.innerHTML = '<h2 class="mb-2 text-lg font-medium"><i class="fas fa-list mr-1"></i> Files</h2>';
+            const fileListElement = document.getElementById('file-list');
+            fileListElement.innerHTML = '<h2 class="text-lg font-medium mb-2"><i class="fas fa-list mr-1"></i> All Files</h2>';
 
             const folders = {};
-            onValue(ref(database, 'files'), (snapshot) => {
+            database.ref('files').once('value').then((snapshot) => {
                 if (!snapshot.exists()) {
-                    folderList.innerHTML += '<div class="p-3 text-gray-500">No files available</div>';
+                    fileListElement.innerHTML += '<div class="text-gray-500 p-3">No files available</div>';
                     return;
                 }
 
                 snapshot.forEach((childSnapshot) => {
                     const fileData = childSnapshot.val();
                     const { folder, subfolder, name, pdfId, date } = fileData;
-                    const dateString = new Date(date).toLocaleDateString('en-US', {
-                        year: 'numeric', month: 'short', day: '2-digit'
+                    const formattedDate = new Date(date).toLocaleDateString('en-US', {
+                        year: 'numeric', month: 'short', day: 'numeric'
                     });
 
                     if (!folders[folder]) folders[folder] = {};
                     if (subfolder) {
                         if (!folders[folder][subfolder]) folders[folder][subfolder] = [];
-                        folders[folder][subfolder].push({ name, pdfId, dateString, key: childSnapshot.key });
+                        folders[folder][subfolder].push({ name, pdfId, date: formattedDate, key: childSnapshot.key });
                     } else {
                         if (!folders[folder]['_files']) folders[folder]['_files'] = [];
-                        folders[folder]['_files'].push({ name, pdfId, dateString, key: childSnapshot });
+                        folders[folder]['_files'].push({ name, pdfId, date: formattedDate, key: childSnapshot.key });
                     }
                 });
 
                 Object.keys(folders).sort().forEach(folder => {
-                    const sectionItems = document.createElement('div');
-                    sectionItems.className = 'section-items mb-4';
+                    const section = document.createElement('div');
+                    section.className = 'section mb-4';
 
                     const sectionHeader = document.createElement('div');
                     sectionHeader.className = 'px-4 py-2 border-b border-gray-200';
                     sectionHeader.innerHTML = `<h3 class="text-md font-semibold text-gray-800">${folder}</h3>`;
-                    sectionItems.appendChild(sectionHeader);
+                    section.appendChild(sectionHeader);
 
                     const sectionContent = document.createElement('div');
-                    sectionContent.className = 'content px-4 py-2';
+                    sectionContent.className = 'px-4 py-2';
 
                     if (folders[folder]['_files']) {
                         folders[folder]['_files'].forEach(file => {
                             const fileItem = document.createElement('div');
-                            fileItem.className = 'file-item-wrapper flex justify-between items-center py-2 px-3 rounded-lg mb-1';
+                            fileItem.className = 'file-item flex justify-between items-center py-2 px-3 rounded-lg cursor-pointer mb-1';
                             fileItem.innerHTML = `
                                 <div class="flex items-center">
-                                    <i class="fas fa-file-pdf mr-2 text-lg text-red-500"></i>
+                                    <i class="fas fa-file-pdf text-red-500 mr-2 text-lg"></i>
                                     <div>
                                         <div class="font-medium text-gray-800">${file.name}</div>
-                                        <div class="text-sm text-gray-500">Added ${file.dateString}</div>
+                                        <div class="text-xs text-gray-500">Added ${file.date}</div>
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-2">
@@ -513,27 +524,27 @@
                         subfolderItem.className = 'mb-2';
 
                         const subfolderHeader = document.createElement('div');
-                        subfolderHeader.className = 'folder-toggle flex items-center justify-between py-2 px-3 bg-gray-50 rounded cursor-pointer mb-1';
+                        subfolderHeader.className = 'folder-toggle flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg cursor-pointer mb-1';
                         subfolderHeader.innerHTML = `
                             <div class="flex items-center">
-                                <i class="fas fa-folder mr-2 text-lg text-yellow-500"></i>
-                                <span class="font-medium">${subfolder}</span>
+                                <i class="fas fa-folder text-yellow-500 mr-2 text-lg"></i>
+                                <span class="font-medium text-gray-800">${subfolder}</span>
                             </div>
                             <i class="fas fa-chevron-right text-gray-500"></i>
                         `;
 
                         const subfolderContent = document.createElement('div');
-                        subfolderContent.className = 'pl-3 hidden';
+                        subfolderContent.className = 'pl-8 hidden';
 
                         folders[folder][subfolder].forEach(file => {
                             const fileItem = document.createElement('div');
-                            fileItem.className = 'file-item-wrapper flex justify-between items-center py-2 px-3 rounded-lg mb-2 cursor-pointer';
+                            fileItem.className = 'file-item flex justify-between items-center py-2 px-3 rounded-lg cursor-pointer mb-1';
                             fileItem.innerHTML = `
                                 <div class="flex items-center">
-                                    <i class="fas fa-file-pdf mr-2 text-lg text-red-500"></i>
+                                    <i class="fas fa-file-pdf text-red-500 mr-2 text-lg"></i>
                                     <div>
                                         <div class="font-medium text-gray-800">${file.name}</div>
-                                        <div class="text-sm text-gray-500">Added ${file.dateString}</div>
+                                        <div class="text-xs text-gray-500">Added ${file.date}</div>
                                     </div>
                                 </div>
                                 <div class="flex items-center space-x-2">
@@ -553,41 +564,42 @@
 
                         subfolderHeader.addEventListener('click', () => {
                             subfolderHeader.classList.toggle('expanded');
-                            subfolderContent.classList.toggle('hidden-content');
+                            subfolderContent.classList.toggle('hidden');
                         });
 
-                            subfolderItem.appendChild(subfolderHeader);
+                        subfolderItem.appendChild(subfolderHeader);
                         subfolderItem.appendChild(subfolderContent);
                         sectionContent.appendChild(subfolderItem);
                     });
 
-                    sectionItems.appendChild(sectionContent);
-                    fileList.appendChild(sectionItems);
+                    section.appendChild(sectionContent);
+                    fileListElement.appendChild(section);
                 });
 
                 // Setup search functionality
-                document.getElementById('search-inputs').addEventListener('input', function() {
-                    const queryInput = this.value.toLowerCase();
-                    const sections = document.querySelectorAll('.section-items');
+                document.getElementById('search-input').addEventListener('input', function() {
+                    const query = this.value.toLowerCase();
+                    const sections = document.querySelectorAll('.section');
 
                     sections.forEach(section => {
-                        let hasItemsVisible = false;
-                        const items = section.querySelectorAll('.file-item');
-                        items.forEach(item => {
+                        let hasVisibleItems = false;
+                        const fileItems = section.querySelectorAll('.file-item');
+
+                        fileItems.forEach(item => {
                             const text = item.textContent.toLowerCase();
-                            if (text.includes(queryInput)) {
+                            if (text.includes(query)) {
                                 item.classList.remove('hidden');
-                                hasItemsVisible = true;
+                                hasVisibleItems = true;
                             } else {
                                 item.classList.add('hidden');
                             }
-                            });
+                        });
 
-                            section.style.display = hasItemsVisible ? 'block' : 'none';
+                        section.style.display = hasVisibleItems ? 'block' : 'none';
                     });
                 });
-            }, (error) => {
-                document.getElementById('upload-status').innerHTML = `<div class="text-error-500 p-3 bg-red-50 rounded>Error loading file list: ${error.message}</div>`;
+            }).catch((error) => {
+                document.getElementById('status').innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">Error loading file list: ${error.message}</div>`;
             });
         }
 
@@ -598,60 +610,67 @@
             openModal('edit-modal');
         }
 
-        async function saveEdit() {
+        function saveEdit() {
             const newFolder = document.getElementById('edit-folder').value.trim();
             const newSubfolder = document.getElementById('edit-subfolder').value.trim();
-            const statusEdit = document.getElementById('edit-status');
+            const statusElement = document.getElementById('edit-status');
 
             if (!newFolder) {
-                statusEdit.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50>Institute name is required</div>`;
+                statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">Institute name is required</div>`;
                 return;
             }
 
-            statusEdit.innerHTML = '<div class="text-blue-500 p-2 bg-blue-50 rounded>Saving...</div>';
+            statusElement.innerHTML = '<div class="text-blue-500 p-2 bg-blue-50 rounded">Saving...</div>';
 
-            try {
-                await update(ref(database, `files/${currentEditKey}`), {
-                    folder: newFolder,
-                    subfolder: newSubfolder
-                });
-                closeModal('edit-modal');
-                document.getElementById('upload-status').innerHTML = '<div class="text-green-500 p-3 bg-green-50 rounded>File updated successfully</div>';
-                setTimeout(() => document.getElementById('upload-status').innerHTML = '', 3000);
-                loadFileList();
-            } catch (error) {
-                statusEdit.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50>Error updating file: ${error.message}</div>`;
-            }
+            database.ref(`files/${currentEditKey}`).update({
+                folder: newFolder,
+                subfolder: newSubfolder
+            }, (error) => {
+                if (error) {
+                    statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">Error updating file: ${error.message}</div>`;
+                } else {
+                    closeModal('edit-modal');
+                    document.getElementById('status').innerHTML = '<div class="text-green-500 p-3 bg-green-50 rounded">File updated successfully</div>';
+                    setTimeout(() => document.getElementById('status').innerHTML = '', 3000);
+                    loadFileList();
+                }
+            });
         }
 
-        async function deleteFile(key, storagePath) {
+        function deleteFile(key, storagePath) {
             if (!confirm('Are you sure you want to delete this file?')) return;
 
-            const statusDelete = document.getElementById('upload-status');
-            statusDelete.innerHTML = '<div class="text-blue-500 p-3 bg-blue-50 rounded>Deleting...</div>';
+            const statusElement = document.getElementById('status');
+            statusElement.innerHTML = '<div class="text-blue-500 p-3 bg-blue-50 rounded">Deleting...</div>';
 
-            try {
-                await deleteObject(ref(storage, storagePath));
-                await remove(ref(database, `files/${key}`));
-                statusDelete.innerHTML = '<div class="text-green-500 p-3 bg-green-50 rounded>File deleted successfully</div>';
-                setTimeout(() => statusDelete.innerHTML = '', 3000);
-                loadFileList();
-            } catch (error) {
-                statusDelete.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded>Error deleting file: ${error.message}</div>`;
-            }
+            // Delete from storage
+            storage.ref(storagePath).delete().then(() => {
+                // Delete from database
+                database.ref(`files/${key}`).remove((error) => {
+                    if (error) {
+                        statusElement.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">Error deleting file: ${error.message}</div>`;
+                    } else {
+                        statusElement.innerHTML = '<div class="text-green-500 p-3 bg-green-50 rounded">File deleted successfully</div>';
+                        setTimeout(() => statusElement.innerHTML = '', 3000);
+                        loadFileList();
+                    }
+                });
+            }).catch((error) => {
+                statusElement.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">Error deleting file from storage: ${error.message}</div>`;
+            });
         }
 
-        onAuthStateChanged(auth, user => {
+        auth.onAuthStateChanged(user => {
             if (user) {
                 userText.textContent = 'Logout';
                 userBtn.onclick = logout;
-                userBtn.className = userBtn.className.replace('bg-blue-600', 'bg-red-600');
+                userBtn.className = userBtn.className.replace('bg-blue-600', 'bg-gray-600');
                 uploadButton.disabled = false;
                 loadFileList();
             } else {
                 userText.textContent = 'Login';
                 userBtn.onclick = () => openModal('login-modal');
-                userBtn.className = userBtn.className.replace('bg-red-600', 'bg-blue-600');
+                userBtn.className = userBtn.className.replace('bg-gray-600', 'bg-blue-600');
                 uploadButton.disabled = true;
                 openModal('login-modal');
             }
@@ -659,7 +678,6 @@
 
         userBtn.addEventListener('click', function(e) {
             if (auth.currentUser) return;
-            e.preventDefault();
             openModal('login-modal');
         });
     </script>
