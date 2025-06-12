@@ -14,24 +14,19 @@
             transform: rotate(90deg);
         }
         .file-item {
-            transition: background-color 0.2s ease, transform 0.2s ease;
+            transition: background-color 0.2s ease;
         }
         .file-item:hover {
             background-color: #f8fafc;
-            transform: translateX(2px);
         }
-        .section-header {
-            background-color: #f1f5f9;
-            position: sticky;
-            top: 0;
-            z-index: 10;
+        .breadcrumb-item:hover {
+            text-decoration: underline;
         }
         .auth-btn {
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            transition: transform 0.2s ease;
         }
         .auth-btn:hover {
             transform: translateY(-1px);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
         }
         .header-container {
             display: flex;
@@ -39,7 +34,7 @@
             justify-content: space-between;
             gap: 0.5rem;
             width: 100%;
-            flex-wrap: nowrap;
+            flex-wrap: wrap;
         }
         .search-container {
             position: relative;
@@ -93,9 +88,6 @@
             .title-container h1 {
                 font-size: 1rem;
             }
-            .title-container i {
-                font-size: 1rem;
-            }
         }
     </style>
 </head>
@@ -110,21 +102,26 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <div class="search-container">
-                        <input type="text" id="searchInput" placeholder="Search test series..." 
+                        <input type="text" id="searchInput" placeholder="Search test series..."
                                class="w-full px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
                     </div>
-                    <button id="userBtn" class="bg-blue-600 text-white px-3 py-1 rounded-lg flex items-center justify-center auth-btn">
+                    <button id="userBtn" class="bg-blue-600 text-white px-3 py-1 rounded-lg flex items-center auth-btn">
                         <i class="fas fa-user mr-1"></i> <span id="userText">Login</span>
                     </button>
                 </div>
             </div>
         </div>
 
+        <!-- Breadcrumb Navigation -->
+        <div id="breadcrumb" class="bg-white rounded-xl shadow-md p-3 mb-4 hidden flex items-center flex-wrap">
+            <span class="text-gray-600 text-sm"></span>
+        </div>
+
         <!-- Main Content -->
         <div id="content" class="bg-white rounded-xl shadow-md">
             <!-- Loading State -->
-            <div id="loading" class="hidden flex justify-center items-center py-16">
+            <div id="loading" class="flex justify-center items-center py-16">
                 <div class="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-600"></div>
             </div>
 
@@ -139,7 +136,7 @@
             </div>
 
             <!-- File List -->
-            <div id="fileList" class="hidden divide-y divide-gray-200"></div>
+            <div id="fileList" class="divide-y divide-gray-200"></div>
 
             <!-- Login Required -->
             <div id="loginRequired" class="hidden text-center py-16 px-4">
@@ -170,41 +167,33 @@
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
-            
             <div class="space-y-4">
                 <div>
                     <label for="loginEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" id="loginEmail" placeholder="your@email.com" 
+                    <input type="email" id="loginEmail" placeholder="your@email.com"
                            class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                 </div>
-                
                 <div>
                     <label for="loginPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input type="password" id="loginPassword" placeholder="••••••••" 
+                    <input type="password" id="loginPassword" placeholder="••••••••"
                            class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                 </div>
-                
                 <div id="loginStatus" class="text-center py-2"></div>
-                
                 <button onclick="login()" class="w-full bg-blue-600 text-white p-3 rounded-lg auth-btn">
                     Login
                 </button>
-                
                 <div class="flex items-center my-4">
                     <div class="flex-1 border-t border-gray-200"></div>
                     <span class="px-3 text-gray-500">or</span>
                     <div class="flex-1 border-t border-gray-200"></div>
                 </div>
-                
                 <button onclick="signInWithGoogle()" class="w-full bg-red-600 text-white p-3 rounded-lg auth-btn flex items-center justify-center">
                     <i class="fab fa-google mr-3"></i> Continue with Google
                 </button>
-                
                 <div class="text-center text-sm text-gray-600 mt-4">
-                    Don't have an account? 
-                    <button onclick="openModal('signupModal'); closeModal('loginModal')" class="text-blue-600 hover:text-blue-800 font-medium">
-                        Sign up
-                    </button>
+                    Don't have an account?
+                    <button onclick="openModal('signupModal'); closeModal('loginModal')"
+                            class="text-blue-600 hover:text-blue-800 font-medium">Sign up</button>
                 </div>
             </div>
         </div>
@@ -219,41 +208,33 @@
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
-            
             <div class="space-y-4">
                 <div>
                     <label for="signupEmail" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                    <input type="email" id="signupEmail" placeholder="your@email.com" 
+                    <input type="email" id="signupEmail" placeholder="your@email.com"
                            class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                 </div>
-                
                 <div>
                     <label for="signupPassword" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                    <input type="password" id="signupPassword" placeholder="••••••••" 
+                    <input type="password" id="signupPassword" placeholder="••••••••"
                            class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                 </div>
-                
                 <div id="signupStatus" class="text-center py-2"></div>
-                
                 <button onclick="signup()" class="w-full bg-green-600 text-white p-3 rounded-lg auth-btn">
                     Create Account
                 </button>
-                
                 <div class="flex items-center my-4">
                     <div class="flex-1 border-t border-gray-200"></div>
                     <span class="px-3 text-gray-500">or</span>
                     <div class="flex-1 border-t border-gray-200"></div>
                 </div>
-                
                 <button onclick="signInWithGoogle()" class="w-full bg-red-600 text-white p-3 rounded-lg auth-btn flex items-center justify-center">
                     <i class="fab fa-google mr-3"></i> Continue with Google
                 </button>
-                
                 <div class="text-center text-sm text-gray-600 mt-4">
-                    Already have an account? 
-                    <button onclick="openModal('loginModal'); closeModal('signupModal')" class="text-blue-600 hover:text-blue-800 font-medium">
-                        Login
-                    </button>
+                    Already have an account?
+                    <button onclick="openModal('loginModal'); closeModal('signupModal')"
+                            class="text-blue-600 hover:text-blue-800 font-medium">Login</button>
                 </div>
             </div>
         </div>
@@ -278,7 +259,7 @@
         const database = firebase.database();
         const auth = firebase.auth();
         const provider = new firebase.auth.GoogleAuthProvider();
-        
+
         // UI Elements
         const content = document.getElementById('content');
         const fileList = document.getElementById('fileList');
@@ -287,6 +268,11 @@
         const loginRequired = document.getElementById('loginRequired');
         const userBtn = document.getElementById('userBtn');
         const userText = document.getElementById('userText');
+        const breadcrumb = document.getElementById('breadcrumb');
+        const searchInput = document.getElementById('searchInput');
+
+        let folderData = {}; // Cache folder structure
+        let currentPath = []; // Track current navigation path
 
         function closeModal(modalId) {
             document.getElementById(modalId).classList.add('hidden');
@@ -301,7 +287,7 @@
                 .then(() => {
                     closeModal('loginModal');
                     closeModal('signupModal');
-                    displayFiles();
+                    loadFiles();
                 })
                 .catch(error => {
                     const statusElement = document.getElementById('loginStatus') || document.getElementById('signupStatus');
@@ -313,13 +299,11 @@
             const email = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             const statusElement = document.getElementById('loginStatus');
-            
             statusElement.innerHTML = '<div class="text-blue-500 p-2 bg-blue-50 rounded">Logging in...</div>';
-            
             auth.signInWithEmailAndPassword(email, password)
                 .then(() => {
                     closeModal('loginModal');
-                    displayFiles();
+                    loadFiles();
                 })
                 .catch(error => {
                     statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
@@ -330,13 +314,11 @@
             const email = document.getElementById('signupEmail').value;
             const password = document.getElementById('signupPassword').value;
             const statusElement = document.getElementById('signupStatus');
-            
             statusElement.innerHTML = '<div class="text-blue-500 p-2 bg-blue-50 rounded">Creating account...</div>';
-            
             auth.createUserWithEmailAndPassword(email, password)
                 .then(() => {
                     closeModal('signupModal');
-                    displayFiles();
+                    loadFiles();
                 })
                 .catch(error => {
                     statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
@@ -358,15 +340,137 @@
             loading.classList.add('hidden');
             emptyState.classList.add('hidden');
             loginRequired.classList.remove('hidden');
+            breadcrumb.classList.add('hidden');
             userText.textContent = 'Login';
         }
 
-        function displayFiles() {
+        function renderBreadcrumbs() {
+            breadcrumb.innerHTML = '';
+            const nav = document.createElement('span');
+            nav.className = 'text-gray-600 text-sm flex items-center flex-wrap gap-1';
+            const rootLink = document.createElement('a');
+            rootLink.href = '#';
+            rootLink.className = 'text-blue-600 hover:underline breadcrumb-item';
+            rootLink.textContent = 'Home';
+            rootLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                navigateTo([]);
+            });
+            nav.appendChild(rootLink);
+
+            currentPath.forEach((folder, index) => {
+                nav.appendChild(document.createTextNode(' > '));
+                const link = document.createElement('a');
+                link.href = '#';
+                link.className = 'text-blue-600 hover:underline breadcrumb-item';
+                link.textContent = folder;
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    navigateTo(currentPath.slice(0, index + 1));
+                });
+                nav.appendChild(link);
+            });
+
+            breadcrumb.appendChild(nav);
+            breadcrumb.classList.remove('hidden');
+        }
+
+        function navigateTo(path) {
+            currentPath = path;
+            const pathStr = path.join('/');
+            window.history.pushState({ path }, '', `#${pathStr}`);
+            displayCurrentPath();
+            renderBreadcrumbs();
+        }
+
+        function displayCurrentPath() {
             fileList.classList.add('hidden');
             loading.classList.remove('hidden');
             emptyState.classList.add('hidden');
             loginRequired.classList.add('hidden');
             fileList.innerHTML = '';
+
+            let current = folderData;
+            currentPath.forEach(folder => {
+                current = current[folder] || {};
+            });
+
+            if (Object.keys(current).length === 0) {
+                loading.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            const section = document.createElement('div');
+            section.className = 'section px-4 py-2';
+
+            // Subfolders
+            Object.keys(current).forEach(key => {
+                if (key === '_files') return;
+                const subfolderItem = document.createElement('div');
+                subfolderItem.className = 'folder-toggle flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg cursor-pointer mb-2';
+                subfolderItem.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-folder text-yellow-500 mr-3 text-lg"></i>
+                        <span class="font-medium text-gray-800">${key}</span>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-500"></i>
+                `;
+                subfolderItem.addEventListener('click', () => {
+                    navigateTo([...currentPath, key]);
+                });
+                section.appendChild(subfolderItem);
+            });
+
+            // Files
+            if (current['_files']) {
+                current['_files'].forEach(file => {
+                    const fileItem = document.createElement('div');
+                    fileItem.className = 'file-item flex justify-between items-center py-3 px-4 rounded-lg cursor-pointer mb-2';
+                    fileItem.innerHTML = `
+                        <div class="flex items-center">
+                            <i class="fas fa-file-pdf text-red-500 mr-3 text-lg"></i>
+                            <div>
+                                <div class="font-medium text-gray-800">${file.name}</div>
+                                <div class="text-xs text-gray-500">Added ${file.date}</div>
+                            </div>
+                        </div>
+                        <a href="view.html?pdfid=${file.pdfId}" class="text-blue-600 hover:text-blue-800 px-3 py-1 rounded">
+                            <i class="fas fa-external-link-alt"></i>
+                        </a>
+                    `;
+                    section.appendChild(fileItem);
+                });
+            }
+
+            fileList.appendChild(section);
+            loading.classList.add('hidden');
+            fileList.classList.remove('hidden');
+
+            // Search functionality
+            searchInput.addEventListener('input', function() {
+                const query = this.value.toLowerCase();
+                const items = section.querySelectorAll('.file-item, .folder-toggle');
+                let hasVisibleItems = false;
+                items.forEach(item => {
+                    const text = item.textContent.toLowerCase();
+                    if (text.includes(query)) {
+                        item.classList.remove('hidden');
+                        hasVisibleItems = true;
+                    } else {
+                        item.classList.add('hidden');
+                    }
+                });
+                section.style.display = hasVisibleItems || query === '' ? 'block' : 'none';
+            });
+        }
+
+        function loadFiles() {
+            fileList.classList.add('hidden');
+            loading.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            loginRequired.classList.add('hidden');
+            folderData = {};
 
             database.ref('files').once('value').then(snapshot => {
                 if (!snapshot.exists()) {
@@ -375,7 +479,6 @@
                     return;
                 }
 
-                const folders = {};
                 snapshot.forEach(childSnapshot => {
                     const fileData = childSnapshot.val();
                     const { folder, subfolder, name, pdfId, date } = fileData;
@@ -383,142 +486,42 @@
                         year: 'numeric', month: 'short', day: 'numeric'
                     });
 
-                    if (!folders[folder]) folders[folder] = {};
+                    if (!folderData[folder]) folderData[folder] = {};
                     if (subfolder) {
-                        if (!folders[folder][subfolder]) folders[folder][subfolder] = [];
-                        folders[folder][subfolder].push({ name, pdfId, date: formattedDate });
-                    } else {
-                        if (!folders[folder]['_files']) folders[folder]['_files'] = [];
-                        folders[folder]['_files'].push({ name, pdfId, date: formattedDate });
-                    }
-                });
-
-                // Create sections for each main folder
-                Object.keys(folders).sort().forEach(folder => {
-                    const section = document.createElement('div');
-                    section.className = 'section';
-                    
-                    // Section header
-                    const sectionHeader = document.createElement('div');
-                    sectionHeader.className = 'section-header px-6 py-3 border-b border-gray-200';
-                    sectionHeader.innerHTML = `
-                        <h2 class="text-lg font-semibold text-gray-800">${folder}</h2>
-                    `;
-                    section.appendChild(sectionHeader);
-                    
-                    // Section content
-                    const sectionContent = document.createElement('div');
-                    sectionContent.className = 'px-6 py-4';
-                    
-                    // Files directly in folder (no subfolder)
-                    if (folders[folder]['_files']) {
-                        folders[folder]['_files'].forEach(file => {
-                            const fileItem = document.createElement('div');
-                            fileItem.className = 'file-item flex justify-between items-center py-3 px-4 rounded-lg cursor-pointer mb-2';
-                            fileItem.innerHTML = `
-                                <div class="flex items-center">
-                                    <i class="fas fa-file-pdf text-red-500 mr-3 text-lg"></i>
-                                    <div>
-                                        <div class="font-medium text-gray-800">${file.name}</div>
-                                        <div class="text-xs text-gray-500">Added ${file.date}</div>
-                                    </div>
-                                </div>
-                                <a href="view.html?pdfid=${file.pdfId}" class="text-blue-600 hover:text-blue-800 px-3 py-1 rounded">
-                                    <i class="fas fa-external-link-alt"></i>
-                                </a>
-                            `;
-                            sectionContent.appendChild(fileItem);
-                        });
-                    }
-                    
-                    // Subfolders
-                    Object.keys(folders[folder]).forEach(subfolder => {
-                        if (subfolder === '_files') return;
-                        
-                        const subfolderItem = document.createElement('div');
-                        subfolderItem.className = 'mb-4';
-                        
-                        const subfolderHeader = document.createElement('div');
-                        subfolderHeader.className = 'folder-toggle flex items-center justify-between py-3 px-4 bg-gray-50 rounded-lg cursor-pointer mb-2';
-                        subfolderHeader.innerHTML = `
-                            <div class="flex items-center">
-                                <i class="fas fa-folder text-yellow-500 mr-3 text-lg"></i>
-                                <span class="font-medium text-gray-800">${subfolder}</span>
-                            </div>
-                            <i class="fas fa-chevron-right text-gray-500"></i>
-                        `;
-                        
-                        const subfolderContent = document.createElement('div');
-                        subfolderContent.className = 'pl-10 hidden';
-                        
-                        folders[folder][subfolder].forEach(file => {
-                            const fileItem = document.createElement('div');
-                            fileItem.className = 'file-item flex justify-between items-center py-3 px-4 rounded-lg cursor-pointer mb-2';
-                            fileItem.innerHTML = `
-                                <div class="flex items-center">
-                                    <i class="fas fa-file-pdf text-red-500 mr-3 text-lg"></i>
-                                    <div>
-                                        <div class="font-medium text-gray-800">${file.name}</div>
-                                        <div class="text-xs text-gray-500">Added ${file.date}</div>
-                                    </div>
-                                </div>
-                                <a href="view.html?pdfid=${file.pdfId}" class="text-blue-600 hover:text-blue-800 px-3 py-1 rounded">
-                                    <i class="fas fa-external-link-alt"></i>
-                                </a>
-                            `;
-                            subfolderContent.appendChild(fileItem);
-                        });
-                        
-                        subfolderHeader.addEventListener('click', () => {
-                            subfolderHeader.classList.toggle('expanded');
-                            subfolderContent.classList.toggle('hidden');
-                        });
-                        
-                        subfolderItem.appendChild(subfolderHeader);
-                        subfolderItem.appendChild(subfolderContent);
-                        sectionContent.appendChild(subfolderItem);
-                    });
-                    
-                    section.appendChild(sectionContent);
-                    fileList.appendChild(section);
-                });
-
-                loading.classList.add('hidden');
-                fileList.classList.remove('hidden');
-                
-                // Setup search functionality
-                document.getElementById('searchInput').addEventListener('input', function() {
-                    const query = this.value.toLowerCase();
-                    const sections = document.querySelectorAll('.section');
-                    
-                    sections.forEach(section => {
-                        let hasVisibleItems = false;
-                        const fileItems = section.querySelectorAll('.file-item');
-                        
-                        fileItems.forEach(item => {
-                            const text = item.textContent.toLowerCase();
-                            if (text.includes(query)) {
-                                item.classList.remove('hidden');
-                                hasVisibleItems = true;
-                            } else {
-                                item.classList.add('hidden');
+                        const subfolderPath = subfolder.split('/'); // Support nested subfolders
+                        let current = folderData[folder];
+                        subfolderPath.forEach((sf, index) => {
+                            if (!current[sf]) current[sf] = {};
+                            if (index === subfolderPath.length - 1) {
+                                if (!current[sf]['_files']) current[sf]['_files'] = [];
+                                current[sf]['_files'].push({ name, pdfId, date: formattedDate });
                             }
+                            current = current[sf];
                         });
-                        
-                        // Show/hide entire section based on visibility of items
-                        section.style.display = hasVisibleItems ? 'block' : 'none';
-                    });
+                    } else {
+                        if (!folderData[folder]['_files']) folderData[folder]['_files'] = [];
+                        folderData[folder]['_files'].push({ name, pdfId, date: formattedDate });
+                    }
                 });
-                
+
+                // Handle URL hash for initial navigation
+                const hash = window.location.hash.replace('#', '').split('/').filter(Boolean);
+                navigateTo(hash);
             }).catch(error => {
                 loading.classList.add('hidden');
                 document.getElementById('status').innerHTML = `
-                    <div class="text-red-500 p-3 bg-red-50 rounded">
-                        Error loading files: ${error.message}
-                    </div>
+                    <div class="text-red-500 p-3 bg-red-50 rounded">Error loading files: ${error.message}</div>
                 `;
             });
         }
+
+        // Handle back/forward navigation
+        window.addEventListener('popstate', (event) => {
+            const path = event.state ? event.state.path : [];
+            currentPath = path;
+            displayCurrentPath();
+            renderBreadcrumbs();
+        });
 
         // Initialize auth state listener
         firebase.auth().onAuthStateChanged(user => {
@@ -526,7 +529,7 @@
                 userText.textContent = 'Logout';
                 userBtn.onclick = logout;
                 userBtn.className = userBtn.className.replace('bg-blue-600', 'bg-gray-600');
-                displayFiles();
+                loadFiles();
             } else {
                 showLoginRequired();
                 userText.textContent = 'Login';
@@ -535,9 +538,9 @@
             }
         });
 
-        // Open login modal if not authenticated when clicking user button
+        // Open login modal if not authenticated
         userBtn.addEventListener('click', function(e) {
-            if (auth.currentUser) return; // Let the onclick handler handle logout
+            if (auth.currentUser) return;
             openModal('loginModal');
         });
     </script>
