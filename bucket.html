@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Sync</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        .folder-toggle i.fa-chevron-right {
+            transition: transform 0.3s ease;
+        }
+        .folder-toggle.expanded i.fa-chevron-right {
+            transform: rotate(90deg);
+        }
+        .file-item {
+            transition: background-color 0.2s ease, transform 0.2s ease;
+        }
+        .file-item:hover {
+            background-color: #f8fafc;
+            transform: translateX(2px);
+        }
+        .auth-btn {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .auth-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.5rem;
+            width: 100%;
+            flex-wrap: nowrap;
+        }
+        .search-container {
+            position: relative;
+            flex: 1;
+            min-width: 120px;
+            max-width: 250px;
+        }
+        .title-container {
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+        }
+        #search-input {
+            width: 100%;
+            padding-left: 2.25rem;
+        }
+        #user-btn {
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+        @media (max-width: 640px) {
+            .header-container {
+                gap: 0.25rem;
+            }
+            .search-container {
+                max-width: 150px;
+            }
+            #search-input {
+                font-size: 0.75rem;
+                padding: 0.5rem 1.75rem;
+            }
+            #user-btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.75rem;
+            }
+            .title-container h1 {
+                font-size: 1.25rem;
+            }
+        }
+        @media (max-width: 400px) {
+            .search-container {
+                max-width: 100px;
+            }
+            #search-input {
+                font-size: 0.7rem;
+            }
+            #user-btn {
+                padding: 0.4rem 0.6rem;
+                font-size: 0.7rem;
+            }
+            .title-container h1 {
+                font-size: 1rem;
+            }
+            .title-container i {
+                font-size: 1rem;
+            }
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            width: 100%;
+            max-width: 24rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="container mx-auto max-w-6xl py-4 px-2">
+        <!-- Header -->
+        <div class="bg-white rounded-xl shadow-md p-4 mb-4">
+            <div class="header-container">
+                <div class="title-container">
+                    <i class="fas fa-database text-blue-600 text-xl mr-2"></i>
+                    <h1 class="text-xl font-bold text-gray-800">Database Sync</h1>
+                </div>
+                <div class="flex items-center gap-2">
+                    <div class="search-container">
+                        <input type="text" id="search-input" placeholder="Search files..." 
+                               class="w-full px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    </div>
+                    <button id="user-btn" class="bg-blue-600 text-white px-3 py-1 rounded-lg flex items-center justify-center auth-btn">
+                        <i class="fas fa-user mr-1"></i> <span id="user-text">Login</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="bg-white rounded-xl shadow-md p-8">
+            <div id="status" class="mb-4"></div>
+            <div id="file-list" class="max-h-96 overflow-y-auto">
+                <h2 class="text-lg font-medium mb-2"><i class="fas fa-list mr-1"></i> Storage Files</h2>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Welcome Back</h2>
+                <button onclick="closeModal('login-modal')" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label for="login-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="login-email" placeholder="your@email.com" 
+                           class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                </div>
+                <div>
+                    <label for="login-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="login-password" placeholder="••••••••" 
+                           class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                </div>
+                <div id="login-status" class="text-center py-2"></div>
+                <button onclick="login()" class="w-full bg-blue-600 text-white p-3 rounded-lg hover:bg-blue-700 auth-btn">
+                    Login
+                </button>
+                <div class="flex items-center my-4">
+                    <div class="flex-1 border-t border-gray-200"></div>
+                    <span class="px-3 text-gray-500">or</span>
+                    <div class="flex-1 border-t border-gray-200"></div>
+                </div>
+                <button onclick="signInWithGoogle()" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 auth-btn flex items-center justify-center">
+                    <i class="fab fa-google mr-3"></i> Continue with Google
+                </button>
+                <div class="text-center text-sm text-gray-600 mt-4">
+                    Don't have an account? 
+                    <button onclick="openModal('signup-modal'); closeModal('login-modal')" class="text-blue-600 hover:text-blue-800 font-medium">
+                        Sign up
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signup Modal -->
+    <div id="signup-modal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold text-gray-800">Create Account</h2>
+                <button onclick="closeModal('signup-modal')" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label for="signup-email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                    <input type="email" id="signup-email" placeholder="your@email.com" 
+                           class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                </div>
+                <div>
+                    <label for="signup-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="signup-password" placeholder="••••••••" 
+                           class="w-full p-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                </div>
+                <div id="signup-status" class="text-center py-2"></div>
+                <button onclick="signup()" class="w-full bg-green-600 text-white p-3 rounded-lg hover:bg-green-700 auth-btn">
+                    Create Account
+                </button>
+                <div class="flex items-center my-4">
+                    <div class="flex-1 border-t border-gray-200"></div>
+                    <span class="px-3 text-gray-500">or</span>
+                    <div class="flex-1 border-t border-gray-200"></div>
+                </div>
+                <button onclick="signInWithGoogle()" class="w-full bg-red-600 text-white p-3 rounded-lg hover:bg-red-700 auth-btn flex items-center justify-center">
+                    <i class="fab fa-google mr-3"></i> Continue with Google
+                </button>
+                <div class="text-center text-sm text-gray-600 mt-4">
+                    Already have an account? 
+                    <button onclick="openModal('login-modal'); closeModal('signup-modal')" class="text-blue-600 hover:text-blue-800 font-medium">
+                        Login
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-storage.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-database.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAolcB_o6f1CQPbLSYrMKTYaz_xYs54khY",
+            authDomain: "quizapp-1ae20.firebaseapp.com",
+            databaseURL: "https://quizapp-1ae20-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "quizapp-1ae20",
+            storageBucket: "quizapp-1ae20.appspot.com",
+            messagingSenderId: "626886802317",
+            appId: "1:626886802317:web:df08c307697ca235c45bc4",
+            measurementId: "G-NKJTC5C1XW"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const storage = firebase.storage();
+        const database = firebase.database();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        const userBtn = document.getElementById('user-btn');
+        const userText = document.getElementById('user-text');
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        function signInWithGoogle() {
+            auth.signInWithPopup(provider)
+                .then(() => {
+                    closeModal('login-modal');
+                    closeModal('signup-modal');
+                    loadStorageFiles();
+                })
+                .catch(error => {
+                    const statusElement = document.getElementById('login-status') || document.getElementById('signup-status');
+                    statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
+                });
+        }
+
+        function login() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const statusElement = document.getElementById('login-status');
+            
+            statusElement.innerHTML = '<div class="text-blue-500 p-2 bg-blue-50 rounded">Logging in...</div>';
+            
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => {
+                    closeModal('login-modal');
+                    loadStorageFiles();
+                })
+                .catch(error => {
+                    statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
+                });
+        }
+
+        function signup() {
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const statusElement = document.getElementById('signup-status');
+            
+            statusElement.innerHTML = '<div class="text-blue-500 p-2 bg-blue-50 rounded">Creating account...</div>';
+            
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(() => {
+                    closeModal('signup-modal');
+                    loadStorageFiles();
+                })
+                .catch(error => {
+                    statusElement.innerHTML = `<div class="text-red-500 p-2 rounded bg-red-50">${error.message}</div>`;
+                });
+        }
+
+        function logout() {
+            auth.signOut().then(() => {
+                document.getElementById('status').innerHTML = '<div class="text-green-500 p-3 bg-green-50 rounded">Logged out successfully.</div>';
+                setTimeout(() => document.getElementById('status').innerHTML = '', 3000);
+            }).catch(error => {
+                document.getElementById('status').innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">${error.message}</div>`;
+            });
+        }
+
+        function generateRandomId() {
+            return Math.random().toString(36).substr(2, 9);
+        }
+
+        function loadStorageFiles() {
+            const fileListElement = document.getElementById('file-list');
+            fileListElement.innerHTML = '<h2 class="text-lg font-medium mb-2"><i class="fas fa-list mr-1"></i> Storage Files</h2>';
+            const statusElement = document.getElementById('status');
+            statusElement.innerHTML = '<div class="text-blue-500 p-3 bg-blue-50 rounded">Loading storage files...</div>';
+
+            const folders = {};
+            const storageRef = storage.ref();
+
+            storageRef.listAll().then(rootResult => {
+                const folderPromises = rootResult.prefixes.map(folderRef => {
+                    const folderName = decodeURIComponent(folderRef.name);
+                    folders[folderName] = { _files: [], subfolders: {} };
+
+                    return folderRef.listAll().then(folderResult => {
+                        // Handle files directly in the folder
+                        folderResult.items.forEach(itemRef => {
+                            const fileName = decodeURIComponent(itemRef.name);
+                            folders[folderName]._files.push({ name: fileName, fullPath: itemRef.fullPath });
+                        });
+
+                        // Handle subfolders
+                        const subfolderPromises = folderResult.prefixes.map(subfolderRef => {
+                            const subfolderName = decodeURIComponent(subfolderRef.name);
+                            folders[folderName].subfolders[subfolderName] = [];
+
+                            return subfolderRef.listAll().then(subfolderResult => {
+                                subfolderResult.items.forEach(itemRef => {
+                                    const fileName = decodeURIComponent(itemRef.name);
+                                    folders[folderName].subfolders[subfolderName].push({ name: fileName, fullPath: itemRef.fullPath });
+                                });
+                            });
+                        });
+
+                        return Promise.all(subfolderPromises);
+                    });
+                });
+
+                Promise.all(folderPromises).then(() => {
+                    statusElement.innerHTML = '';
+                    displayFileList(folders);
+                }).catch(error => {
+                    statusElement.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">Error loading storage files: ${error.message}</div>`;
+                });
+            }).catch(error => {
+                statusElement.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">Error loading storage files: ${error.message}</div>`;
+            });
+        }
+
+        function displayFileList(folders) {
+            const fileListElement = document.getElementById('file-list');
+            fileListElement.innerHTML = '<h2 class="text-lg font-medium mb-2"><i class="fas fa-list mr-1"></i> Storage Files</h2>';
+
+            if (Object.keys(folders).length === 0) {
+                fileListElement.innerHTML += '<div class="text-gray-500 p-3">No files available</div>';
+                return;
+            }
+
+            Object.keys(folders).sort().forEach(folder => {
+                const section = document.createElement('div');
+                section.className = 'section mb-4';
+
+                const sectionHeader = document.createElement('div');
+                sectionHeader.className = 'folder-toggle flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-gray-50 rounded-lg cursor-pointer';
+                sectionHeader.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-folder text-yellow-500 mr-2 text-lg"></i>
+                        <h3 class="text-md font-semibold text-gray-800">${folder}</h3>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="submitFolder('${folder}')" class="text-blue-600 hover:text-blue-800 auth-btn">
+                            <i class="fas fa-cloud-upload-alt"></i> Submit Folder
+                        </button>
+                        <i class="fas fa-chevron-right text-gray-500"></i>
+                    </div>
+                `;
+                section.appendChild(sectionHeader);
+
+                const sectionContent = document.createElement('div');
+                sectionContent.className = 'px-4 py-2 hidden';
+
+                // Files directly in folder
+                if (folders[folder]._files.length > 0) {
+                    folders[folder]._files.forEach(file => {
+                        const fileItem = document.createElement('div');
+                        fileItem.className = 'file-item flex justify-between items-center py-2 px-3 rounded-lg cursor-pointer mb-1';
+                        fileItem.innerHTML = `
+                            <div class="flex items-center">
+                                <i class="fas fa-file-pdf text-red-500 mr-2 text-lg"></i>
+                                <div>
+                                    <div class="font-medium text-gray-800">${file.name}</div>
+                                    <div class="text-xs text-gray-500">In ${folder}</div>
+                                </div>
+                            </div>
+                            <button onclick="submitFile('${folder}', '', '${file.name}', '${file.fullPath}')" class="text-blue-600 hover:text-blue-800 auth-btn">
+                                <i class="fas fa-cloud-upload-alt"></i> Submit
+                            </button>
+                        `;
+                        sectionContent.appendChild(fileItem);
+                    });
+                }
+
+                // Subfolders
+                Object.keys(folders[folder].subfolders).sort().forEach(subfolder => {
+                    const subfolderItem = document.createElement('div');
+                    subfolderItem.className = 'mb-2';
+
+                    const subfolderHeader = document.createElement('div');
+                    subfolderHeader.className = 'folder-toggle flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg cursor-pointer mb-1';
+                    subfolderHeader.innerHTML = `
+                        <div class="flex items-center">
+                            <i class="fas fa-folder text-yellow-500 mr-2 text-lg"></i>
+                            <span class="font-medium text-gray-800">${subfolder}</span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="submitSubfolder('${folder}', '${subfolder}')" class="text-blue-600 hover:text-blue-800 auth-btn">
+                                <i class="fas fa-cloud-upload-alt"></i> Submit Subfolder
+                            </button>
+                            <i class="fas fa-chevron-right text-gray-500"></i>
+                        </div>
+                    `;
+
+                    const subfolderContent = document.createElement('div');
+                    subfolderContent.className = 'pl-8 hidden';
+
+                    folders[folder].subfolders[subfolder].forEach(file => {
+                        const fileItem = document.createElement('div');
+                        fileItem.className = 'file-item flex justify-between items-center py-2 px-3 rounded-lg cursor-pointer mb-1';
+                        fileItem.innerHTML = `
+                            <div class="flex items-center">
+                                <i class="fas fa-file-pdf text-red-500 mr-2 text-lg"></i>
+                                <div>
+                                    <div class="font-medium text-gray-800">${file.name}</div>
+                                    <div class="text-xs text-gray-500">In ${folder}/${subfolder}</div>
+                                </div>
+                            </div>
+                            <button onclick="submitFile('${folder}', '${subfolder}', '${file.name}', '${file.fullPath}')" class="text-blue-600 hover:text-blue-800 auth-btn">
+                                <i class="fas fa-cloud-upload-alt"></i> Submit
+                            </button>
+                        `;
+                        subfolderContent.appendChild(fileItem);
+                    });
+
+                    subfolderHeader.addEventListener('click', () => {
+                        subfolderHeader.classList.toggle('expanded');
+                        subfolderContent.classList.toggle('hidden');
+                    });
+
+                    subfolderItem.appendChild(subfolderHeader);
+                    subfolderItem.appendChild(subfolderContent);
+                    sectionContent.appendChild(subfolderItem);
+                });
+
+                sectionHeader.addEventListener('click', (e) => {
+                    if (e.target.closest('button')) return; // Prevent toggle if clicking submit button
+                    sectionHeader.classList.toggle('expanded');
+                    sectionContent.classList.toggle('hidden');
+                });
+
+                section.appendChild(sectionContent);
+                fileListElement.appendChild(section);
+            });
+
+            // Setup search functionality
+            document.getElementById('search-input').addEventListener('input', function() {
+                const query = this.value.toLowerCase();
+                const sections = document.querySelectorAll('.section');
+
+                sections.forEach(section => {
+                    let hasVisibleItems = false;
+                    const fileItems = section.querySelectorAll('.file-item');
+
+                    fileItems.forEach(item => {
+                        const text = item.textContent.toLowerCase();
+                        if (text.includes(query)) {
+                            item.classList.remove('hidden');
+                            hasVisibleItems = true;
+                        } else {
+                            item.classList.add('hidden');
+                        }
+                    });
+
+                    section.style.display = hasVisibleItems ? 'block' : 'none';
+                });
+            });
+        }
+
+        function submitFolder(folder) {
+            if (!auth.currentUser) {
+                openModal('login-modal');
+                return;
+            }
+
+            const statusElement = document.getElementById('status');
+            statusElement.innerHTML = '<div class="text-blue-500 p-3 bg-blue-50 rounded">Submitting folder...</div>';
+
+            // Submit all files in the folder and its subfolders
+            const folderRef = storage.ref(folder);
+            folderRef.listAll().then(result => {
+                const promises = [];
+
+                // Direct files
+                result.items.forEach(itemRef => {
+                    const fileName = decodeURIComponent(itemRef.name);
+                    promises.push(submitSingleFile(folder, '', fileName, itemRef.fullPath));
+                });
+
+                // Subfolders
+                const subfolderPromises = result.prefixes.map(subfolderRef => {
+                    const subfolderName = decodeURIComponent(subfolderRef.name);
+                    return subfolderRef.listAll().then(subResult => {
+                        subResult.items.forEach(itemRef => {
+                            const fileName = decodeURIComponent(itemRef.name);
+                            promises.push(submitSingleFile(folder, subfolderName, fileName, itemRef.fullPath));
+                        });
+                    });
+                });
+
+                Promise.all(subfolderPromises).then(() => {
+                    Promise.all(promises).then(() => {
+                        statusElement.innerHTML = '<div class="text-green-500 p-3 bg-green-50 rounded">Folder submitted successfully</div>';
+                        setTimeout(() => statusElement.innerHTML = '', 3000);
+                    }).catch(error => {
+                        statusElement.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">Error submitting folder: ${error.message}</div>`;
+                    });
+                });
+            }).catch(error => {
+                statusElement.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">Error accessing folder: ${error.message}</div>`;
+            });
+        }
+
+        function submitSubfolder(folder, subfolder) {
+            if (!auth.currentUser) {
+                openModal('login-modal');
+                return;
+            }
+
+            const statusElement = document.getElementById('status');
+            statusElement.innerHTML = '<div class="text-blue-500 p-3 bg-blue-50 rounded">Submitting subfolder...</div>';
+
+            const subfolderRef = storage.ref(`${folder}/${subfolder}`);
+            subfolderRef.listAll().then(result => {
+                const promises = result.items.map(itemRef => {
+                    const fileName = decodeURIComponent(itemRef.name);
+                    return submitSingleFile(folder, subfolder, fileName, itemRef.fullPath);
+                });
+
+                Promise.all(promises).then(() => {
+                    statusElement.innerHTML = '<div class="text-green-500 p-3 bg-green-50 rounded">Subfolder submitted successfully</div>';
+                    setTimeout(() => statusElement.innerHTML = '', 3000);
+                }).catch(error => {
+                    statusElement.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">Error submitting subfolder: ${error.message}</div>`;
+                });
+            }).catch(error => {
+                statusElement.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">Error accessing subfolder: ${error.message}</div>`;
+            });
+        }
+
+        function submitFile(folder, subfolder, fileName, fullPath) {
+            if (!auth.currentUser) {
+                openModal('login-modal');
+                return;
+            }
+
+            const statusElement = document.getElementById('status');
+            statusElement.innerHTML = '<div class="text-blue-500 p-3 bg-blue-50 rounded">Submitting file...</div>';
+
+            submitSingleFile(folder, subfolder, fileName, fullPath).then(() => {
+                statusElement.innerHTML = '<div class="text-green-500 p-3 bg-green-50 rounded">File submitted successfully</div>';
+                setTimeout(() => statusElement.innerHTML = '', 3000);
+            }).catch(error => {
+                statusElement.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">Error submitting file: ${error.message}</div>`;
+            });
+        }
+
+        function submitSingleFile(folder, subfolder, fileName, fullPath) {
+            return new Promise((resolve, reject) => {
+                const storageRef = storage.ref(fullPath);
+                storageRef.getDownloadURL().then(url => {
+                    const pdfId = generateRandomId();
+                    const fileData = {
+                        date: new Date().toISOString(),
+                        folder: folder,
+                        name: fileName,
+                        pdfId: pdfId,
+                        subfolder: subfolder,
+                        uid: auth.currentUser.uid,
+                        url: url
+                    };
+
+                    database.ref('files').push(fileData, error => {
+                        if (error) {
+                            reject(error);
+                        } else {
+                            resolve();
+                        }
+                    });
+                }).catch(error => {
+                    reject(error);
+                });
+            });
+        }
+
+        auth.onAuthStateChanged(user => {
+            if (user) {
+                userText.textContent = 'Logout';
+                userBtn.onclick = logout;
+                userBtn.className = userBtn.className.replace('bg-blue-600', 'bg-gray-600');
+                loadStorageFiles();
+            } else {
+                userText.textContent = 'Login';
+                userBtn.onclick = () => openModal('login-modal');
+                userBtn.className = userBtn.className.replace('bg-gray-600', 'bg-blue-600');
+                openModal('login-modal');
+            }
+        });
+
+        userBtn.addEventListener('click', function(e) {
+            if (auth.currentUser) return;
+            openModal('login-modal');
+        });
+    </script>
+</body>
+</html>
