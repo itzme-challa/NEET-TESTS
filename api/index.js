@@ -175,7 +175,7 @@ app.get('/', (req, res) => {
         </div>
     </div>
 
-    <script src="/js/index.js"></script>
+    <script type="module" src="/js/index.js"></script>
 </body>
 </html>
   `);
