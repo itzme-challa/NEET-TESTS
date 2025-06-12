@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Viewer</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         #pdfViewer {
             max-height: 100vh;
@@ -31,13 +31,13 @@
             max-height: calc(100vh - 2rem);
             border: 1px solid #e5e7eb;
             border-radius: 8px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
         }
         #pageInfo {
             position: fixed;
             bottom: 1rem;
             right: 1rem;
-            background: rgba(0,0,0,0.7);
+            background: rgba(0, 0, 0, 0.7);
             color: white;
             padding: 0.5rem 1rem;
             border-radius: 9999px;
@@ -114,16 +114,23 @@
         </div>
     </main>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
-    <script src="/config.js"></script>
-    <script type="module">
-        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js';
-        import { getDatabase, ref, query, orderByChild, equalTo, onValue } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js';
-        import { getStorage } from 'https://www.gstatic.com/firebasejs/10.12.2/firebase-storage.js';
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-database.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyAolcB_o6f1CQPbLSYrMKTYaz_xYs54khY",
+            authDomain: "quizapp-1ae20.firebaseapp.com",
+            databaseURL: "https://quizapp-1ae20-default-rtdb.asia-southeast1.firebasedatabase.app",
+            projectId: "quizapp-1ae20",
+            storageBucket: "quizapp-1ae20.appspot.com",
+            messagingSenderId: "626886802317",
+            appId: "1:626886802317:web:df08c307697ca235c45bc4",
+            measurementId: "G-NKJTC5C1XW"
+        };
 
-        const app = initializeApp(firebaseConfig);
-        const database = getDatabase(app);
-        let storage = getStorage(app);
+        firebase.initializeApp(firebaseConfig);
+        const database = firebase.database();
         let pdfDoc = null;
         let pdfUrl = '';
         const scale = 1.5;
@@ -154,7 +161,9 @@
                 canvasContext: canvas.getContext('2d'),
                 viewport: viewport
             };
-            page.render(renderContext).promise.catch(error => console.error(`Error rendering page:`, error));
+            page.render(renderContext).promise.catch(error => {
+                console.error(`Error rendering page:`, error);
+            });
         }
 
         function renderPages() {
@@ -168,12 +177,13 @@
                         if (!entry.target.children.length) {
                             pdfDoc.getPage(pageNum).then(page => {
                                 const canvas = document.createElement('canvas');
-                                canvas.dataset.pageNum = pageNum;
+                                canvas.dataset.page = pageNum;
                                 renderPage(page, canvas, entry.target);
                             });
                         }
-                    });
-                }, { threshold: 0.1 });
+                    }
+                });
+            }, { threshold: 0.1 });
 
             for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
                 const pageContainer = document.createElement('div');
@@ -196,7 +206,7 @@
                     thumbnails.appendChild(canvas);
 
                     const renderContext = {
-                        canvasContext: canvas.getContext('2d';
+                        canvasContext: canvas.getContext('2d'),
                         viewport: viewport
                     };
                     page.render(renderContext);
@@ -216,9 +226,9 @@
                     if (entry.isIntersecting) {
                         const pageNum = Array.from(pdfViewer.children).indexOf(entry.target) + 1;
                         pageInfo.textContent = `${pageNum} / ${pdfDoc.numPages}`;
-                    });
-                }
-                }, { threshold: 0.5 });
+                    }
+                });
+            }, { threshold: 0.5 });
 
             Array.from(pdfViewer.children).forEach(child => observer.observe(child));
         }
@@ -240,38 +250,39 @@
                 return;
             }
 
-            const filesRef = query(ref(database, 'files'), orderByChild('pdfId'), equalTo(pdfId));
-            onValue(filesRef, (snapshot) => {
-                if (snapshot.exists()) {
-                    snapshot.forEach((childSnapshot) => {
-                        const fileData = childSnapshot.val();
-                        pdfUrl = fileData.url;
-                        downloadButton.href = pdfUrl;
-                        downloadButton.classList.remove('hidden');
+            database.ref('files').orderByChild('pdfId').equalTo(pdfId).once('value')
+                .then(snapshot => {
+                    if (snapshot.exists()) {
+                        snapshot.forEach(childSnapshot => {
+                            const fileData = childSnapshot.val();
+                            pdfUrl = fileData.url;
+                            downloadButton.href = pdfUrl;
+                            downloadButton.classList.remove('hidden');
 
-                        pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
-                            pdfDoc = pdf;
-                            pdfViewer.style.display = 'block';
-                            downloadSection.style.display = 'none';
-                            pageInfo.style.display = 'block';
-                            loading.style.display = 'none';
-                            renderPages();
-                            renderThumbnails();
-                            updatePageInfo();
-                        }).catch(error => {
-                            console.error('Error loading PDF:', error);
-                            status.innerHTML = '<div class="text-red-500">Failed to load PDF</div>';
-                            showDownloadOption(pdfUrl);
+                            pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
+                                pdfDoc = pdf;
+                                pdfViewer.style.display = 'block';
+                                downloadSection.style.display = 'none';
+                                pageInfo.style.display = 'block';
+                                loading.style.display = 'none';
+                                renderPages();
+                                renderThumbnails();
+                                updatePageInfo();
+                            }).catch(error => {
+                                console.error('Error loading PDF:', error);
+                                status.innerHTML = '<div class="text-red-500">Failed to load PDF</div>';
+                                showDownloadOption(pdfUrl);
+                            });
                         });
-                    });
-                } else {
-                    status.innerHTML = '<div class="text-red-500">PDF not found</div>';
+                    } else {
+                        status.innerHTML = '<div class="text-red-500">PDF not found</div>';
+                        loading.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    status.innerHTML = `<div class="text-red-500">Error: ${error.message}</div>`;
                     loading.style.display = 'none';
-                }
-            }, (error) => {
-                status.innerHTML = `<div class="text-red-500>Error: ${error.message}</div>`;
-                loading.style.display = 'none';
-            });
+                });
         }
 
         toggleSidebar.addEventListener('click', () => {
