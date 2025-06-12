@@ -1,18 +1,8 @@
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'firebase/auth';
-import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
-import { getDatabase, ref, push, get, update, remove } from 'firebase/database';
-
-const firebaseConfig = {
-    apiKey: process.env.FIREBASE_API_KEY,
-    authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-    databaseURL: process.env.FIREBASE_DATABASE_URL,
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.FIREBASE_APP_ID,
-    measurementId: process.env.FIREBASE_MEASUREMENT_ID
-};
+import { firebaseConfig } from './config.js';
+import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js';
+import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js';
+import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-storage.js';
+import { getDatabase, ref, push, get, update, remove } from 'https://www.gstatic.com/firebasejs/9.23.0/firebase-database.js';
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -135,15 +125,8 @@ uploadButton.addEventListener('click', () => {
         progressContainer.appendChild(progressText);
         statusElement.appendChild(progressContainer);
 
-        uploadTask.on('state_changed', (snapshot) => {
-            const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-            progressBar.style.width = progress + '%';
-            progressText.textContent = Math.round(progress) + '%';
-        }, (error) => {
-            progressText.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">Error: ${error.message}</div>`;
-            progressBar.className = 'bg-red-600 h-full rounded';
-        }, () => {
-            getDownloadURL(uploadTask.snapshot.ref).then((downloadURL) => {
+        uploadTask.then(snapshot => {
+            getDownloadURL(snapshot.ref).then((downloadURL) => {
                 const fileData = {
                     name: file.name,
                     url: downloadURL,
@@ -164,6 +147,9 @@ uploadButton.addEventListener('click', () => {
                     statusElement.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">Error saving file data: ${error.message}</div>`;
                 });
             });
+        }).catch(error => {
+            progressText.innerHTML = `<div class="text-red-500 p-3 bg-red-50 rounded">Error: ${error.message}</div>`;
+            progressBar.className = 'bg-red-600 h-full rounded';
         });
     });
 });
