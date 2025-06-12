@@ -35,6 +35,18 @@
             padding: 20px;
             display: none;
         }
+        #pageInfo {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -45,6 +57,7 @@
         <a id="downloadLink" href="#" download>Download PDF</a>
     </div>
     <div id="status"></div>
+    <div id="pageInfo"></div>
 
     <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-database.js"></script>
@@ -67,6 +80,7 @@
         const status = document.getElementById('status');
         const downloadSection = document.getElementById('downloadSection');
         const downloadLink = document.getElementById('downloadLink');
+        const pageInfo = document.getElementById('pageInfo');
         let pdfDoc = null;
         const scale = 1.5;
 
@@ -79,6 +93,7 @@
             const viewport = page.getViewport({ scale });
             const canvas = document.createElement('canvas');
             canvas.className = 'page-canvas';
+            canvas.dataset.page = pageNum;
             canvas.width = viewport.width;
             canvas.height = viewport.height;
             pdfViewer.appendChild(canvas);
@@ -88,12 +103,33 @@
                 console.error(`Error rendering page ${pageNum}:`, error);
                 status.textContent = `Failed to render page ${pageNum}`;
             });
+
+            return canvas;
+        }
+
+        function updatePageInfo() {
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const pageNum = parseInt(entry.target.dataset.page);
+                        pageInfo.textContent = `Page ${pageNum} of ${pdfDoc.numPages}`;
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            Array.from(pdfViewer.children).forEach(canvas => observer.observe(canvas));
         }
 
         function renderAllPages() {
             pdfViewer.innerHTML = '';
             for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-                pdfDoc.getPage(pageNum).then(page => renderPage(page, pageNum));
+                pdfDoc.getPage(pageNum).then(page => {
+                    renderPage(page, pageNum);
+                    if (pageNum === pdfDoc.numPages) {
+                        updatePageInfo();
+                        pageInfo.style.display = 'block';
+                    }
+                });
             }
         }
 
@@ -102,6 +138,7 @@
             downloadLink.href = url;
             pdfViewer.style.display = 'none';
             loading.style.display = 'none';
+            pageInfo.style.display = 'none';
         }
 
         function loadPDF() {
