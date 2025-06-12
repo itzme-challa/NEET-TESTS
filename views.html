@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <style>
         #pdfViewer {
-            max-height: calc(100vh - 120px);
+            max-height: 100vh;
             overflow-y: auto;
             scroll-snap-type: y mandatory;
             scrollbar-width: none;
@@ -19,9 +19,16 @@
         .page-container {
             scroll-snap-align: start;
             margin-bottom: 1rem;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
         .page-canvas {
             width: 100%;
+            max-width: 100%;
+            height: auto;
+            max-height: calc(100vh - 2rem);
             border: 1px solid #e5e7eb;
             border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -43,6 +50,11 @@
             overflow-y: auto;
             transition: transform 0.3s ease;
             transform: translateX(-100%);
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            z-index: 20;
         }
         #sidebar.active {
             transform: translateX(0);
@@ -60,16 +72,6 @@
             display: none;
             text-align: center;
         }
-        #searchInput {
-            transition: width 0.3s ease, opacity 0.3s ease;
-            width: 0;
-            opacity: 0;
-            overflow: hidden;
-        }
-        #searchInput.active {
-            width: 200px;
-            opacity: 1;
-        }
     </style>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
@@ -79,10 +81,6 @@
                 <i class="fas fa-file-pdf mr-2 text-red-500"></i> PDF Viewer
             </h1>
             <div class="flex items-center space-x-2">
-                <button id="toggleSearch" class="bg-gray-600 text-white px-3 py-1 rounded-lg hover:bg-gray-700">
-                    <i class="fas fa-search"></i>
-                </button>
-                <input id="searchInput" type="text" placeholder="Search in PDF..." class="px-3 py-1 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
                 <button id="toggleSidebar" class="bg-gray-600 text-white px-3 py-1 rounded-lg hover:bg-gray-700">
                     <i class="fas fa-th-list"></i>
                 </button>
@@ -96,7 +94,7 @@
         </div>
     </header>
     <main class="flex-grow container mx-auto p-4 flex">
-        <div id="sidebar" class="fixed md:static h-[calc(100vh-120px)] z-10">
+        <div id="sidebar" class="h-full">
             <div id="thumbnails" class="p-2"></div>
         </div>
         <div class="flex-grow">
@@ -146,8 +144,6 @@
         const sidebar = document.getElementById('sidebar');
         const thumbnails = document.getElementById('thumbnails');
         const toggleSidebar = document.getElementById('toggleSidebar');
-        const toggleSearch = document.getElementById('toggleSearch');
-        const searchInput = document.getElementById('searchInput');
 
         function getQueryParam(param) {
             const urlParams = new URLSearchParams(window.location.search);
@@ -246,36 +242,6 @@
             loading.style.display = 'none';
         }
 
-        function searchPDF(query) {
-            if (!query) {
-                status.innerHTML = '';
-                return;
-            }
-            status.innerHTML = '<div class="text-blue-600">Searching...</div>';
-            let found = false;
-
-            const searchPage = (pageNum) => {
-                if (pageNum > pdfDoc.numPages) {
-                    status.innerHTML = found ? '' : '<div class="text-red-500">No matches found</div>';
-                    return;
-                }
-
-                pdfDoc.getPage(pageNum).then(page => {
-                    page.getTextContent().then(content => {
-                        const text = content.items.map(item => item.str).join(' ').toLowerCase();
-                        if (text.includes(query.toLowerCase()) && !found) {
-                            found = true;
-                            pdfViewer.children[pageNum - 1].scrollIntoView({ behavior: 'smooth' });
-                            status.innerHTML = `<div class="text-green-500">Match found on page ${pageNum}</div>`;
-                        }
-                        searchPage(pageNum + 1);
-                    });
-                });
-            };
-
-            searchPage(1);
-        }
-
         function loadPDF() {
             const pdfId = getQueryParam('pdfid');
             if (!pdfId) {
@@ -321,20 +287,6 @@
 
         toggleSidebar.addEventListener('click', () => {
             sidebar.classList.toggle('active');
-        });
-
-        toggleSearch.addEventListener('click', () => {
-            searchInput.classList.toggle('active');
-            if (searchInput.classList.contains('active')) {
-                searchInput.focus();
-            } else {
-                searchInput.value = '';
-                status.innerHTML = '';
-            }
-        });
-
-        searchInput.addEventListener('input', e => {
-            searchPDF(e.target.value);
         });
 
         loadPDF();
