@@ -13,6 +13,7 @@ app.get('/', (req, res) => {
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="/css/view.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
 </head>
 <body class="bg-gray-100 min-h-screen flex flex-col">
     <header class="bg-white shadow p-4 sticky top-0 z-10">
@@ -53,7 +54,7 @@ app.get('/', (req, res) => {
             <div id="pageInfo" class="hidden"></div>
         </div>
     </main>
-    <script src="/js/view.js"></script>
+    <script type="module" src="/js/view.js"></script>
 </body>
 </html>
   `);
