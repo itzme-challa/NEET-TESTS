@@ -4,15 +4,14 @@
   "scripts": {
     "dev": "vercel dev",
     "start": "vercel start",
-    "deploy": "vercel deploy --prod"
+    "deploy": "vercel --prod"
   },
   "dependencies": {
+    "@vercel/node": "^2.8.4",
     "firebase": "^9.22.0",
-    "firebase-admin": "^11.8.0",
-    "pdf-lib": "^1.17.1",
-    "pdfjs-dist": "^3.4.120"
+    "firebase-admin": "^11.8.0"
   },
   "devDependencies": {
-    "vercel": "^28.16.11"
+    "vercel": "^28.18.3"
   }
 }
