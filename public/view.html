@@ -4,17 +4,169 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Viewer</title>
-    <script type="module" src="/assets/js/viewer.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
     <style>
-        /* Your existing viewer styles */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+        }
+        #pdfViewer {
+            max-width: 100%;
+            padding: 10px;
+        }
+        .page-canvas {
+            width: 100%;
+            height: auto;
+            border: 1px solid #ccc;
+            margin-bottom: 10px;
+        }
+        #loading {
+            text-align: center;
+            padding: 50px;
+        }
+        #status {
+            text-align: center;
+            color: red;
+            padding: 10px;
+        }
+        #downloadSection {
+            text-align: center;
+            padding: 20px;
+            display: none;
+        }
+        #pageInfo {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 500;
+            display: none;
+        }
     </style>
 </head>
 <body>
-    <!-- Your existing viewer body content -->
-    
-    <script type="module">
-        import { initViewer } from '/assets/js/viewer.js';
-        document.addEventListener('DOMContentLoaded', initViewer);
+    <div id="loading">Loading PDF...</div>
+    <div id="pdfViewer" style="display: none;"></div>
+    <div id="downloadSection">
+        <p>Unable to load PDF. Please download it instead.</p>
+        <a id="downloadLink" href="#" download>Download PDF</a>
+    </div>
+    <div id="status"></div>
+    <div id="pageInfo"></div>
+
+    <script>
+        const pdfViewer = document.getElementById('pdfViewer');
+        const loading = document.getElementById('loading');
+        const status = document.getElementById('status');
+        const downloadSection = document.getElementById('downloadSection');
+        const downloadLink = document.getElementById('downloadLink');
+        const pageInfo = document.getElementById('pageInfo');
+        let pdfDoc = null;
+        const scale = 1.5;
+
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        function renderPage(page, pageNum) {
+            const viewport = page.getViewport({ scale });
+            const canvas = document.createElement('canvas');
+            canvas.className = 'page-canvas';
+            canvas.dataset.page = pageNum;
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            pdfViewer.appendChild(canvas);
+
+            const context = canvas.getContext('2d');
+            page.render({ canvasContext: context, viewport }).promise.catch(error => {
+                console.error(`Error rendering page ${pageNum}:`, error);
+                status.textContent = `Failed to render page ${pageNum}`;
+            });
+
+            return canvas;
+        }
+
+        function updatePageInfo() {
+            const observer = new IntersectionObserver(entries => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const pageNum = parseInt(entry.target.dataset.page);
+                        pageInfo.textContent = `Page ${pageNum} of ${pdfDoc.numPages}`;
+                    }
+                });
+            }, { threshold: 0.5 });
+
+            Array.from(pdfViewer.children).forEach(canvas => observer.observe(canvas));
+        }
+
+        function renderAllPages() {
+            pdfViewer.innerHTML = '';
+            for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                pdfDoc.getPage(pageNum).then(page => {
+                    renderPage(page, pageNum);
+                    if (pageNum === pdfDoc.numPages) {
+                        updatePageInfo();
+                        pageInfo.style.display = 'block';
+                    }
+                });
+            }
+        }
+
+        function showDownloadOption(url) {
+            downloadSection.style.display = 'block';
+            downloadLink.href = url;
+            pdfViewer.style.display = 'none';
+            loading.style.display = 'none';
+            pageInfo.style.display = 'none';
+        }
+
+        function loadPDF() {
+            const pdfId = getQueryParam('pdfid');
+            if (!pdfId) {
+                status.textContent = 'No PDF ID provided';
+                loading.style.display = 'none';
+                return;
+            }
+
+            fetch(`/api/files?pdfid=${pdfId}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data && data.url) {
+                        const pdfUrl = data.url;
+                        downloadLink.href = pdfUrl;
+
+                        pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
+                            pdfDoc = pdf;
+                            pdfViewer.style.display = 'block';
+                            downloadSection.style.display = 'none';
+                            loading.style.display = 'none';
+                            renderAllPages();
+                        }).catch(error => {
+                            console.error('Error loading PDF:', error);
+                            status.textContent = 'Failed to load PDF';
+                            showDownloadOption(pdfUrl);
+                        });
+                    } else {
+                        status.textContent = 'PDF not found';
+                        loading.style.display = 'none';
+                    }
+                })
+                .catch(error => {
+                    status.textContent = `Error: ${error.message}`;
+                    loading.style.display = 'none';
+                });
+        }
+
+        // Set worker path for PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.worker.min.js';
+        
+        loadPDF();
     </script>
 </body>
 </html>
