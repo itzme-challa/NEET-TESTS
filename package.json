@@ -3,12 +3,6 @@
   "version": "1.0.0",
   "description": "Test Series Viewer application",
   "main": "index.js",
-  "scripts": {
-    "start": "node index.js"
-  },
-  "dependencies": {
-    "firebase-admin": "^12.7.0"
-  },
   "engines": {
     "node": ">=18"
   }
