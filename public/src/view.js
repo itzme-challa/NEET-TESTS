@@ -1,4 +1,4 @@
-import { database } from './firebase.js';
+import { database } from '/src/firebase.js';
 import { ref, query, orderByChild, equalTo, get } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
 
 const pdfViewer = document.getElementById('pdfViewer');
@@ -71,6 +71,12 @@ async function loadPDF() {
     const pdfId = getQueryParam('pdfid');
     if (!pdfId) {
         status.textContent = 'No PDF ID provided';
+        loading.style.display = 'none';
+        return;
+    }
+
+    if (!window.pdfjsLib) {
+        status.textContent = 'PDF.js library not loaded';
         loading.style.display = 'none';
         return;
     }
