@@ -1,4 +1,4 @@
-import { database } from '/src/firebase.js';
+import { database } from './firebase.js';
 import { ref, query, orderByChild, equalTo, get } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
 
 const pdfViewer = document.getElementById('pdfViewer');
@@ -83,7 +83,7 @@ async function loadPDF() {
 
     try {
         const filesRef = ref(database, 'files');
-        const q = query(filesRef, orderByChild('pdfId'), equalTo(pdfId));
+        const q = query(filesRef, orderByChild('id'), equalTo(pdfId));
         const snapshot = await get(q);
 
         if (snapshot.exists()) {
@@ -105,11 +105,11 @@ async function loadPDF() {
                 });
             });
         } else {
-            status.textContent = 'PDF not found';
-            loading.style.display = 'none';
+            throw new Error('PDF not found');
         }
     } catch (error) {
         status.textContent = `Error: ${error.message}`;
+        console.error(error);
         loading.style.display = 'none';
     }
 }
