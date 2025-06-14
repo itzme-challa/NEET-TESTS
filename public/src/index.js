@@ -235,12 +235,12 @@ async function loadFiles() {
                 const subfolderPath = subfolder.split('/');
                 let current = folderData[folder];
                 subfolderPath.forEach((sf, index) => {
-                    if (!currentFolder[sf]) current[sf] = {};
+                    if (!current[sf]) current[sf] = {};
                     if (index === subfolderPath.length - 1) {
-                        if (!currentFolder[sf]['_files']) current[sf]['_files'] = [];
+                        if (!current[sf]['_files']) current[sf]['_files'] = [];
                         current[sf]['_files'].push({ name, id, date: formattedDate });
                     }
-                    currentFolder = current[sf];
+                    current = current[sf];
                 });
             } else {
                 if (!folderData[folder]['_files']) folderData[folder]['_files'] = [];
@@ -272,13 +272,13 @@ auth.onAuthStateChanged(user => {
     if (user) {
         userText.textContent = 'Logout';
         userBtn.onclick = logout;
-        userBtn.className = userBtn.className.replace('bg-blue-600', 'bg-gray-700');
+        userBtn.className = userBtn.className.replace('bg-blue-600', 'bg-gray-600');
         loadFiles();
     } else {
         showLoginRequired();
         userText.textContent = 'Login';
         userBtn.onclick = () => openModal('loginModal');
-        userBtn.className = userBtn.className.replace('bg-gray-700', 'bg-blue-600');
+        userBtn.className = userBtn.className.replace('bg-gray-600', 'bg-blue-600');
     }
 });
 
