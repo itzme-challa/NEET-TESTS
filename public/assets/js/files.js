@@ -1,18 +1,29 @@
-import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.0.0/firebase-database.js";
-import { auth } from "./auth.js";
+import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
 const db = getDatabase();
 
-// File management functions
 export function loadFiles() {
-  const filesRef = ref(db, 'files');
-  return new Promise((resolve, reject) => {
-    onValue(filesRef, (snapshot) => {
-      if (snapshot.exists()) {
-        resolve(snapshot.val());
-      } else {
-        reject(new Error("No files available"));
-      }
-    }, { onlyOnce: true });
-  });
+    return new Promise((resolve, reject) => {
+        const filesRef = ref(db, 'files');
+        onValue(filesRef, (snapshot) => {
+            if (snapshot.exists()) {
+                resolve(snapshot.val());
+            } else {
+                reject(new Error("No files available"));
+            }
+        }, { onlyOnce: true });
+    });
+}
+
+export function getFileById(pdfId) {
+    return new Promise((resolve, reject) => {
+        const filesRef = ref(db, 'files');
+        onValue(filesRef.orderByChild('pdfId').equalTo(pdfId), (snapshot) => {
+            if (snapshot.exists()) {
+                resolve(snapshot.val());
+            } else {
+                reject(new Error("File not found"));
+            }
+        }, { onlyOnce: true });
+    });
 }
