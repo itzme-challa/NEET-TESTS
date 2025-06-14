@@ -1,4 +1,5 @@
-import { auth, provider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from '/src/firebase.js';
+import { auth, database, provider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from '/src/firebase.js';
+import { ref, get } from 'https://www.gstatic.com/firebasejs/10.14.1/firebase-database.js';
 
 // UI Elements
 const content = document.getElementById('content');
@@ -173,8 +174,8 @@ function displayCurrentPath() {
                         <div class="text-xs text-gray-500">Added ${file.date}</div>
                     </div>
                 </div>
-                <a href="/view?pdfid=${file.pdfId}" class="text-blue-600 hover:text-blue-800 px-3 py-1 rounded">
-                    <i class="fas fa-external-link-alt"></i>
+                <a href="/view?pdfid=${file.id}" class="text-blue-600 hover:text-blue-800 px-3 py-1 rounded">
+                    <i class="fas fa-eye"></i>
                 </a>
             `;
             section.appendChild(fileItem);
@@ -211,21 +212,41 @@ async function loadFiles() {
     folderData = {};
 
     try {
-        const response = await fetch('/api/files');
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const data = await response.json();
-        if (data.error) {
-            throw new Error(data.error);
-        }
-        folderData = data;
+        const filesRef = ref(database, 'files');
+        const snapshot = await get(filesRef);
 
-        if (Object.keys(folderData).length === 0) {
+        if (!snapshot.exists()) {
             loading.classList.add('hidden');
             emptyState.classList.remove('hidden');
             return;
         }
+
+        const data = snapshot.val();
+        folderData = {};
+
+        Object.entries(data).forEach(([id, fileData]) => {
+            const { folder, subfolder, name, date } = fileData;
+            const formattedDate = new Date(date).toLocaleDateString('en-US', {
+                year: 'numeric', month: 'short', day: 'numeric'
+            });
+
+            if (!folderData[folder]) folderData[folder] = {};
+            if (subfolder) {
+                const subfolderPath = subfolder.split('/');
+                let current = folderData[folder];
+                subfolderPath.forEach((sf, index) => {
+                    if (!currentFolder[sf]) current[sf] = {};
+                    if (index === subfolderPath.length - 1) {
+                        if (!currentFolder[sf]['_files']) current[sf]['_files'] = [];
+                        current[sf]['_files'].push({ name, id, date: formattedDate });
+                    }
+                    currentFolder = current[sf];
+                });
+            } else {
+                if (!folderData[folder]['_files']) folderData[folder]['_files'] = [];
+                folderData[folder]['_files'].push({ name, id, date: formattedDate });
+            }
+        });
 
         const hash = window.location.hash.replace('#', '').split('/').filter(Boolean);
         const decodedHash = hash.map(decodeURIComponent);
@@ -233,7 +254,7 @@ async function loadFiles() {
     } catch (error) {
         loading.classList.add('hidden');
         document.getElementById('status').innerHTML = `
-            <div class="text-red-500 p-3 bg-red-50 rounded">Error loading files: ${error.message}</div>
+            <div class="text-red-600 p-3 bg-red-50 rounded">Error loading files: ${error.message}</div>
         `;
     }
 }
@@ -251,13 +272,13 @@ auth.onAuthStateChanged(user => {
     if (user) {
         userText.textContent = 'Logout';
         userBtn.onclick = logout;
-        userBtn.className = userBtn.className.replace('bg-blue-600', 'bg-gray-600');
+        userBtn.className = userBtn.className.replace('bg-blue-600', 'bg-gray-700');
         loadFiles();
     } else {
         showLoginRequired();
         userText.textContent = 'Login';
         userBtn.onclick = () => openModal('loginModal');
-        userBtn.className = userBtn.className.replace('bg-gray-600', 'bg-blue-600');
+        userBtn.className = userBtn.className.replace('bg-gray-700', 'bg-blue-600');
     }
 });
 
