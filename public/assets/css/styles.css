@@ -1,0 +1,23 @@
+/* All your existing CSS styles from the style tag */
+.folder-toggle i.fa-chevron-right {
+    transition: transform 0.3s ease;
+}
+.folder-toggle.expanded i.fa-chevron-right {
+    transform: rotate(90deg);
+}
+.file-item {
+    transition: background-color 0.2s ease;
+}
+.file-item:hover {
+    background-color: #f8fafc;
+}
+.breadcrumb-item:hover {
+    text-decoration: underline;
+}
+.auth-btn {
+    transition: transform 0.2s ease;
+}
+.auth-btn:hover {
+    transform: translateY(-1px);
+}
+/* All other styles from your original index.html */
