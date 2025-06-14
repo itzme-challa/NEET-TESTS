@@ -1,4 +1,4 @@
-import { auth, provider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from './firebase.js';
+import { auth, provider, signInWithPopup, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from '/src/firebase.js';
 
 // UI Elements
 const content = document.getElementById('content');
