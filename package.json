@@ -2,9 +2,14 @@
   "name": "test-series-viewer",
   "version": "1.0.0",
   "description": "Test Series Viewer application",
+  "main": "index.js",
   "scripts": {
-    "start": "vercel dev"
+    "start": "node index.js"
   },
-  "dependencies": {},
-  "devDependencies": {}
+  "dependencies": {
+    "firebase-admin": "^12.6.0"
+  },
+  "engines": {
+    "node": ">=14"
+  }
 }
