@@ -7,9 +7,9 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "firebase-admin": "^12.6.0"
+    "firebase-admin": "^12.7.0"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=18"
   }
 }
