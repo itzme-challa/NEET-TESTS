@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PDF Viewer</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.9.359/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.7.76/pdf.min.js"></script>
     <style>
         body {
             margin: 0;
@@ -59,128 +59,6 @@
     <div id="status"></div>
     <div id="pageInfo"></div>
 
-    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/7.20.0/firebase-database.js"></script>
-    <script>
-        const firebaseConfig = {
-            apiKey: process.env.FIREBASE_API_KEY,
-            authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-            databaseURL: process.env.FIREBASE_DATABASE_URL,
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-            messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-            appId: process.env.FIREBASE_APP_ID,
-            measurementId: process.env.FIREBASE_MEASUREMENT_ID
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-        const pdfViewer = document.getElementById('pdfViewer');
-        const loading = document.getElementById('loading');
-        const status = document.getElementById('status');
-        const downloadSection = document.getElementById('downloadSection');
-        const downloadLink = document.getElementById('downloadLink');
-        const pageInfo = document.getElementById('pageInfo');
-        let pdfDoc = null;
-        const scale = 1.5;
-
-        function getQueryParam(param) {
-            const urlParams = new URLSearchParams(window.location.search);
-            return urlParams.get(param);
-        }
-
-        function renderPage(page, pageNum) {
-            const viewport = page.getViewport({ scale });
-            const canvas = document.createElement('canvas');
-            canvas.className = 'page-canvas';
-            canvas.dataset.page = pageNum;
-            canvas.width = viewport.width;
-            canvas.height = viewport.height;
-            pdfViewer.appendChild(canvas);
-
-            const context = canvas.getContext('2d');
-            page.render({ canvasContext: context, viewport }).promise.catch(error => {
-                console.error(`Error rendering page ${pageNum}:`, error);
-                status.textContent = `Failed to render page ${pageNum}`;
-            });
-
-            return canvas;
-        }
-
-        function updatePageInfo() {
-            const observer = new IntersectionObserver(entries => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const pageNum = parseInt(entry.target.dataset.page);
-                        pageInfo.textContent = `Page ${pageNum} of ${pdfDoc.numPages}`;
-                    }
-                });
-            }, { threshold: 0.5 });
-
-            Array.from(pdfViewer.children).forEach(canvas => observer.observe(canvas));
-        }
-
-        function renderAllPages() {
-            pdfViewer.innerHTML = '';
-            for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
-                pdfDoc.getPage(pageNum).then(page => {
-                    renderPage(page, pageNum);
-                    if (pageNum === pdfDoc.numPages) {
-                        updatePageInfo();
-                        pageInfo.style.display = 'block';
-                    }
-                });
-            }
-        }
-
-        function showDownloadOption(url) {
-            downloadSection.style.display = 'block';
-            downloadLink.href = url;
-            pdfViewer.style.display = 'none';
-            loading.style.display = 'none';
-            pageInfo.style.display = 'none';
-        }
-
-        function loadPDF() {
-            const pdfId = getQueryParam('pdfid');
-            if (!pdfId) {
-                status.textContent = 'No PDF ID provided';
-                loading.style.display = 'none';
-                return;
-            }
-
-            database.ref('files').orderByChild('pdfId').equalTo(pdfId).once('value')
-                .then(snapshot => {
-                    if (snapshot.exists()) {
-                        snapshot.forEach(childSnapshot => {
-                            const fileData = childSnapshot.val();
-                            const pdfUrl = fileData.url;
-                            downloadLink.href = pdfUrl;
-
-                            pdfjsLib.getDocument(pdfUrl).promise.then(pdf => {
-                                pdfDoc = pdf;
-                                pdfViewer.style.display = 'block';
-                                downloadSection.style.display = 'none';
-                                loading.style.display = 'none';
-                                renderAllPages();
-                            }).catch(error => {
-                                console.error('Error loading PDF:', error);
-                                status.textContent = 'Failed to load PDF';
-                                showDownloadOption(pdfUrl);
-                            });
-                        });
-                    } else {
-                        status.textContent = 'PDF not found';
-                        loading.style.display = 'none';
-                    }
-                })
-                .catch(error => {
-                    status.textContent = `Error: ${error.message}`;
-                    loading.style.display = 'none';
-                });
-        }
-
-        loadPDF();
-    </script>
+    <script type="module" src="/src/view.js"></script>
 </body>
 </html>
