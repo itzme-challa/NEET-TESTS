@@ -1,0 +1,10 @@
+{
+  "name": "test-series-viewer",
+  "version": "1.0.0",
+  "description": "Test Series Viewer application",
+  "scripts": {
+    "start": "vercel dev"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}
